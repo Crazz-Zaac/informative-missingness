@@ -11,7 +11,7 @@
         - Documenting and presenting work
 - Initialized the project structure and repository.
 - Set up `.ssh` keys for GitHub access.
-- Decided to log progress in the README.
+- Decided to log progress in the `PROJECT_JOURNAL.md`.
 
 ---
 
