@@ -52,8 +52,8 @@
     ```
     
 ### 2025-05-11
-- Created `utils/config.py` to store `db` settings
-- Created `utils/database.py` to:
+- [x] Created `utils/config.py` to store `db` settings
+- [x] Created `utils/database.py` to:
     - connect to db
     - show all tables in schema
     - read table table into a dataframe
