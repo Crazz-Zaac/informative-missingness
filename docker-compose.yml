@@ -1,0 +1,48 @@
+services:
+    postgres:
+        image: postgres:15-alpine
+        restart: always
+        container_name: mimiciv_postgres
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: mimiciv
+            POSTGRES_HOST_AUTH_METHOD: trust
+            POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
+            SHARED_BUFFERS: 2GB
+            WORK_MEM: 128MB
+            MAINTENANCE_WORK_MEM: 1GB
+        deploy:
+            resources:
+                limits:
+                    cpus: '12'
+                    memory: 4G
+                reservations:
+                    memory: 4G
+        ports:
+            - "5432:5432"
+        volumes:
+            - ./postgres_data:/var/lib/postgresql/data
+            # this is the script path that will be executed when the container is created
+            # it will create the database and load the data
+            - ./postgres/create.sql:/docker-entrypoint-initdb.d/create.sql
+            - ./mimiciv/3.1:/mimiciv  # this is the path to the mimiciv data
+            - ./postgres/load.sql:/docker-entrypoint-initdb.d/load.sql
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres -d mimiciv"]
+            interval: 5m
+            timeout: 60s
+            retries: 5
+            start_period: 2m
+        ulimits:
+            nofile:
+                soft: 65536
+                hard: 65536
+        shm_size: 2GB
+volumes:
+    postgres_data:
+        driver: local
+        driver_opts:
+            type: none
+            device: ./postgres_data
+            o: bind
