@@ -52,8 +52,10 @@
     ```
     
 ### 2025-05-11
-- [x] Created `utils/config.py` to store `db` settings
+- [x] Created `utils/config.py` to store database settings
 - [x] Created `utils/database.py` to:
-    - connect to db
-    - show all tables in schema
-    - read table table into a dataframe
+    - connect to database
+    - show list of all tables in schema
+    - read a table table into a dataframe with limit
+- [x] Made it possible to import into notebook using the command `pip install -e .`
+- [x] Created a `notebooks/exp_2025.ipynb` for teseting the package

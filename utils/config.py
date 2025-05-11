@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
-class Config(BaseSettings):
+class DatabaseSettings(BaseSettings):
     DB_USER: str = "postgres"       # Your PostgreSQL username
     DB_PASS: str = "postgres"       # Your PostgreSQL password
     DB_HOST: str = "localhost"      # Since you mapped 5432:5432
