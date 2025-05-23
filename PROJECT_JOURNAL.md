@@ -129,7 +129,7 @@
 
 
 ### 2025-05-23
-- [x] Attended a meeting (11 AM)
+-  Attended a meeting (11 AM)
 - Meeting discussions:
     - Discussed about the [`STraTS library`](https://github.com/sindhura97/STraTS/tree/main/src)
     - TO DOs:
