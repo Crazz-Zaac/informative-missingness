@@ -59,3 +59,88 @@
     - read a table table into a dataframe with limit
 - [x] Made it possible to import into notebook using the command `pip install -e .`
 - [x] Created a `notebooks/exp_2025.ipynb` for teseting the package
+
+### 2025-05-16
+- [x] Attended a meeting (11 AM)
+    - The following things were discussed:
+        - Purpose of research: Is missingness pattern predictive?
+        - Finding what patterns have been investigated.
+        - Possibility:
+            - Different population have same missingness
+            - Same population have same missingness
+        - Preparation of data in two ways:
+            - All raw data
+            - Binarized version of data (e.g., if missing `0` else `1`)
+        - Data can be organized in tabular or graph
+        - Try to have more graphical representation of data
+        - TO DOs:
+            - Explore graphs over time
+            - Explore patterns co-occurrence (i.e., how often the given variable occurs) -> `is it predictable?`
+            - Check missingness across different demographic group
+        - Model training:
+            - Train temporal graph neural network (if possible)
+            - Ask: How much information do I have to have to actually have a reasonable/good accuracy?
+            - Look into the most discriminative patterns specific to a case (e.g., cancer or chemotherapy)
+            - Train on `raw data`
+            - Train on `indicators`
+            - Training on both `raw` and `indicators`
+            - Analyse the performance
+        - Additional:
+            - `Conformal Prediction` can also be experimented
+        
+- [x] Related Papers:
+    1. [Modeling Missing Data in Clinical Time Series with RNNs](./papers/supervisors_recommendation/Lipton16.pdf)
+    - Brief summary:
+        - Imputation techniques
+            - **Zero Imputation**: If a value $x^{t}$ is missing, then replace it with `0`
+            - **Forward-Filling**:
+                - If a previous value exists for a variable, it is carried forward. If there's no previous record measurement, it is imputed with the median estimated over all measurements in the training data of that variable.
+            - **Missingness Indicators**: 
+                - Binary variables are added to indicate if value was imputed. For each variable $x^{t}$, an indicator $m_i^{(t)}$ = 1 if missing otherwise 0.
+            - **Hand-Engineered Missingness Features (for linear models)**:
+                - Frequency of measurement 
+                - Standard deviation of missingness
+                - Whether a variable was measured at all
+                - Timing of first/last measurement
+        - Best model
+            - LSTM (RNN):
+                - Zero Imputation
+                - Missing data indicators
+        - Findings
+            - RNNs fits better and can model complex dependencies.
+            - Linear models also improve but are limited since only static weights can be assigned to missingness
+    2. [Recurrent Neural Networks for Multivariate Time Series with Missing Values](./papers/supervisors_recommendation/s41598-018-24271-9.pdf)
+    - Brief summary:
+        - Non-RNN models cannot directly handle variable-length time series.
+        - Time series data is regularly sampled to create fixed-length inputs.
+        - For non-RNN "Simple" method, a masking vector is concatenated with the input.
+        - PhysioNet dataset:
+            - Sampled hourly.
+            - Forward or backward propagation used to fill gaps.
+        - SVMs use Gaussian RBF kernel (chosen for better performance).
+        - scikit-learn is used for implementing and tuning non-RNN models via cross-validation.
+        - GRU-Mean has: 100 hidden units for MIMIC-III, 64 hidden units for PhysioNet.
+        - Batch normalization and dropout (rate 0.5) are applied to the regressor layer.
+        - RNN models are trained using Adam optimizer with early stopping.
+        - Keras and Theano are used to implement RNNs.
+        - Among all these imputation methods, with LR and SVM, the SoftImpute performed the best.
+        - CubicSpline, which captures the temporal structure of the data performed the best with RF, but failed with SVM and GRU. 
+        - MissForest provides slightly performed better with GRU models than other additional imputation baselines.
+
+
+### 2025-05-23
+- [x] Attended a meeting (11 AM)
+- Meeting discussions:
+    - Discussed about the [`STraTS library`](https://github.com/sindhura97/STraTS/tree/main/src)
+    - TO DOs:
+        - Take list of admissions and preprocess labevents table data
+        - Use chart time
+        - Admission file has time of admission time in hr/min/day in admissions table (beginning of admission) -> discretize the timestamp based on hour/day etc. if you have many data in same date take the average
+        - Select all features (if you wish to make feature selection)
+        - Start with Random Forest
+        - Train with oversampling (+) weighted loss function
+        - Train it on X, M and Delta with different combinations
+        - Then start with on GRU and GRU-D
+        - Train it on X, M and Delta with different combinations
+        - Compare their performances
+        - Next part: Patterns of M on different demographic data
