@@ -129,7 +129,7 @@
 
 
 ### 2025-05-23
--  Attended a meeting (11 AM)
+- [x] Attended a meeting (11 AM)
 - Meeting discussions:
     - Discussed about the [`STraTS library`](https://github.com/sindhura97/STraTS/tree/main/src)
     - TO DOs:
@@ -144,3 +144,5 @@
         - Train it on X, M and Delta with different combinations
         - Compare their performances
         - Next part: Patterns of M on different demographic data
+- [x] Project Initial Setup
+    - [x] Folder and files structuring
