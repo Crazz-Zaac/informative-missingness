@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 from pathlib import Path
 from enum import Enum
+from datetime import datetime
 
 
 class DataConfig(BaseModel):
@@ -23,11 +24,6 @@ class TrainingConfig(BaseModel):
     learning_rate: float = Field(0.001, gt=0.0)
     weight_decay: float = Field(0.0001, ge=0.0)
     early_stopping_patience: int = Field(5)
-    save_best_model: bool = Field(True)
-    if save_best_model:
-        experiment_name: str = Field("best_model")
-        save_model_every: int = Field(1)
-        best_model_path: Path = Field(Path(f"outputs/experiments/{experiment_name}.pth"))
 
 
 class LoggingConfig(BaseModel):
@@ -40,14 +36,24 @@ class EvaluationConfig(BaseModel):
         ["accuracy"]
     )
 
+
 class ExperimentConfig(BaseModel):
     experiment_name: str = Field("default_experiment")
     experiment_dir: Path = Field(Path("outputs/experiments"))
-    data: DataConfig = Field(DataConfig())
-    model: ModelConfig = Field(ModelConfig())
-    training: TrainingConfig = Field(TrainingConfig())
-    logging: LoggingConfig = Field(LoggingConfig())
-    evaluation: EvaluationConfig = Field(EvaluationConfig())
+    experiment_id: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
+    )
+    data: DataConfig
+    model: ModelConfig
+    training: TrainingConfig
+    logging: LoggingConfig
+    evaluation: EvaluationConfig
+    save_best_model: bool = Field(True)
+    if save_best_model:
+        save_model_every: int = Field(1)
+        best_model_path: Path = Field(
+            Path(f"{experiment_dir}/{experiment_id}.pth")
+        )
 
     def __init__(self, **data):
         super().__init__(**data)
