@@ -51,10 +51,18 @@ class ExperimentConfig(BaseModel):
     save_best_model: bool = Field(True)
     if save_best_model:
         save_model_every: int = Field(1)
+        # create a directory with experiment_id
+        try:
+            experiment_dir = Path(experiment_dir)
+        except Exception as e:
+            raise ValueError(
+                f"Invalid experiment directory: {experiment_dir}. Error: {e}"
+            )
         best_model_path: Path = Field(
             Path(f"{experiment_dir}/{experiment_id}.pth")
         )
 
     def __init__(self, **data):
         super().__init__(**data)
+        # Create the experiment directory if it doesn't exist
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
