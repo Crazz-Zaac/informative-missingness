@@ -1,0 +1,57 @@
+Technical Summary: "Beyond Random Missingness: Clinically Rethinking Healthcare Time Series Imputation"
+This research investigates how different masking strategies (simulating missing data patterns) affect time-series imputation in clinical settings, using the PhysioNet 2012 dataset. The study evaluates imputation models under varying missingness conditions and their downstream impact on in-hospital mortality prediction.
+
+Key Contributions:
+Masking Strategies:
+
+Augmentation (RMEO): Introduces artificial missingness only to observed data, mimicking real-world interruptions (e.g., patient movement disrupting monitoring).
+
+Overlay (RMOD): Applies missingness across the entire dataset, overlapping with natural missingness.
+
+Masking Timing:
+
+Pre-Masking: Static missingness introduced before training.
+
+In-Mini-Batch Masking: Dynamic missingness per batch, improving adaptability.
+
+Normalization Procedures:
+
+Before Masking (NBM): Normalizes complete data first, yielding more stable results.
+
+After Masking (NAM): Normalizes incomplete data, reflecting real-world conditions.
+
+Clinical Task Evaluation:
+
+Downstream mortality prediction tested using XGBoost and RNN classifiers.
+
+Findings:
+Imputation Performance:
+
+SAITS performed best under overlay mini-batch masking (MAE: 0.206), suggesting exposure to diverse missingness improves learning.
+
+BRITS was robust across strategies (MAE: 0.254–0.263), making it reliable for varied clinical scenarios.
+
+CSDI was sensitive to masking choice (MAE: 0.226–0.239), indicating dependency on missingness structure.
+
+Temporal Processing:
+
+Mini-batch masking generally outperformed pre-masking, enhancing adaptability to irregular clinical monitoring.
+
+Pre-masking worked well for models like BRITS and TimesNet, suitable for predictable missingness.
+
+Normalization Impact:
+
+NBM stabilized performance (e.g., SAITS, Transformers), while NAM affected complex models like CSDI.
+
+Downstream Prediction:
+
+SAITS-imputed data achieved the highest ROC-AUC (0.820) with XGBoost under overlay masking.
+
+BRITS showed consistency (ROC-AUC: 0.796–0.817), while CSDI varied significantly between classifiers.
+
+Attention-based models (SAITS, Transformer) preserved clinically relevant patterns better than RNN-based or probabilistic models (CSDI, GP-VAE).
+
+Conclusion:
+The choice of masking strategy, normalization timing, and model architecture significantly impacts imputation quality and downstream clinical predictions. SAITS excels in dynamic missingness, while BRITS offers robustness. The findings emphasize the need for clinically relevant missingness simulations in healthcare AI research.
+
+Significance: Provides a framework for evaluating imputation methods in real-world clinical settings, where missing data patterns are non-random and impact predictive outcomes.
