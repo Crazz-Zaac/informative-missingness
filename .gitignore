@@ -178,3 +178,4 @@ mimiciv/
 postgres_data/
 
 .myenv/
+*.parquet

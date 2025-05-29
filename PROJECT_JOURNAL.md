@@ -133,7 +133,7 @@
 - Meeting discussions:
     - Discussed about the [`STraTS library`](https://github.com/sindhura97/STraTS/tree/main/src)
     - TO DOs:
-        - Take list of admissions and preprocess labevents table data
+        - Take a list of admissions and preprocess labevents table data
         - Use chart time
         - Admission file has time of admission time in hr/min/day in admissions table (beginning of admission) -> discretize the timestamp based on hour/day etc. if you have many data in same date take the average
         - Select all features (if you wish to make feature selection)
@@ -146,3 +146,9 @@
         - Next part: Patterns of M on different demographic data
 - [x] Project Initial Setup
     - [x] Folder and files structuring
+
+### 2025-05-29
+- [x] Fixed the `.env` variables to be read successfully.
+- [x] Solved the issue with heavy data loading by just taking the chunk of the file and saving to a `.parquet` file 
+- [x] Solved issues with docker memory size and reconfigured the `.yml` file
+- [x] Prepared `14 days prior` and `7 days prior` data for further processing
