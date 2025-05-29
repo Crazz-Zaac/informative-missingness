@@ -9,6 +9,9 @@ class DataConfig(BaseModel):
     batch_size: int = Field(32)
     num_workers: int = Field(4)
     shuffle: bool = Field(True)
+    random_seed: int = Field(42, ge=0, description="Random seed for reproducibility")
+    meta_data_path: Optional[Path] = Field(..., description="Path to metadata file")
+    test_size: float = Field(0.2, ge=0.1, le=0.5, description="Test split ratio")
     validation_split: float = Field(0.2, ge=0.0, le=1.0)
 
 
@@ -58,9 +61,7 @@ class ExperimentConfig(BaseModel):
             raise ValueError(
                 f"Invalid experiment directory: {experiment_dir}. Error: {e}"
             )
-        best_model_path: Path = Field(
-            Path(f"{experiment_dir}/{experiment_id}.pth")
-        )
+        best_model_path: Path = Field(Path(f"{experiment_dir}/{experiment_id}.pth"))
 
     def __init__(self, **data):
         super().__init__(**data)
