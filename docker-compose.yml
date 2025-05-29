@@ -7,11 +7,28 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
             POSTGRES_DB: mimiciv
-            POSTGRES_HOST_AUTH_METHOD: trust
-            POSTGRES_EFFECTIVE_CACHE_SIZE: 4GB
-            SHARED_BUFFERS: 2GB
-            WORK_MEM: 128MB
-            MAINTENANCE_WORK_MEM: 1GB
+        command: |
+            postgres
+            -c shared_buffers=1GB
+            -c effective_cache_size=2GB
+            -c work_mem=64MB
+            -c maintenance_work_mem=512MB
+            -c temp_file_limit=2GB
+            -c max_connections=100
+            -c random_page_cost=1.1
+            -c effective_io_concurrency=200
+            -c checkpoint_completion_target=0.9
+            -c wal_buffers=32MB
+            -c max_wal_size=2GB
+            -c min_wal_size=512MB
+            -c max_worker_processes=8
+            -c max_parallel_workers_per_gather=2
+            -c max_parallel_workers=4
+            -c max_parallel_maintenance_workers=2
+            -c synchronous_commit=off
+            -c fsync=on
+            -c log_temp_files=100MB
+            -c temp_buffers=32MB
         deploy:
             resources:
                 limits:
@@ -30,15 +47,15 @@ services:
             - ./postgres/load.sql:/docker-entrypoint-initdb.d/load.sql
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U postgres -d mimiciv"]
-            interval: 5m
-            timeout: 60s
-            retries: 5
-            start_period: 2m
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
         ulimits:
             nofile:
                 soft: 65536
                 hard: 65536
-        shm_size: 2GB
+        shm_size: 1GB
 volumes:
     postgres_data:
         driver: local
