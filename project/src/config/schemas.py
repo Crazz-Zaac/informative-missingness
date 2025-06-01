@@ -1,18 +1,17 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 from pathlib import Path
-from enum import Enum
 from datetime import datetime
 
 
 class DataConfig(BaseModel):
-    batch_size: int = Field(32)
-    num_workers: int = Field(4)
-    shuffle: bool = Field(True)
-    random_seed: int = Field(42, ge=0, description="Random seed for reproducibility")
-    meta_data_path: Optional[Path] = Field(..., description="Path to metadata file")
-    test_size: float = Field(0.2, ge=0.1, le=0.5, description="Test split ratio")
-    validation_split: float = Field(0.2, ge=0.0, le=1.0)
+    window_size: int = Field(
+        7, description="Size of the sliding window for time series data"
+    )
+    batch_size: int = Field(32, gt=0)
+    preprocessing_cache: str = Field(
+        "../dataset/preprocessed/", description="Path to cache preprocessed data"
+    )
 
 
 class ModelConfig(BaseModel):
@@ -23,14 +22,14 @@ class ModelConfig(BaseModel):
 
 
 class TrainingConfig(BaseModel):
-    epochs: int = Field(10)
-    learning_rate: float = Field(0.001, gt=0.0)
-    weight_decay: float = Field(0.0001, ge=0.0)
-    early_stopping_patience: int = Field(5)
+    max_epochs: int = Field(10, gt=0, description="Maximum number of training epochs")
+    learning_rate: float = Field(
+        0.001, gt=0.0, description="Learning rate for the optimizer"
+    )
 
 
 class LoggingConfig(BaseModel):
-    log_dir: Path = Field(Path("outputs/experiments/logs"))
+    log_dir: Path = Field(Path("../outputs/experiments/logs"))
     log_level: Literal["info", "debug", "warning"] = Field("info")
 
 
@@ -42,7 +41,7 @@ class EvaluationConfig(BaseModel):
 
 class ExperimentConfig(BaseModel):
     experiment_name: str = Field("default_experiment")
-    experiment_dir: Path = Field(Path("outputs/experiments"))
+    experiment_dir: Path = Field(Path("../outputs/experiments"))
     experiment_id: str = Field(
         default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
     )

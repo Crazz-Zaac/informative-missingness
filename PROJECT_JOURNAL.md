@@ -152,3 +152,7 @@
 - [x] Solved the issue with heavy data loading by just taking the chunk of the file and saving to a `.parquet` file 
 - [x] Solved issues with docker memory size and reconfigured the `.yml` file
 - [x] Prepared `14 days prior` and `7 days prior` data for further processing
+
+### 2025-06-01
+- [x] Created a pre-processing pipeline for tabular data
+- [x] Structured folders to fit a ML pipeline

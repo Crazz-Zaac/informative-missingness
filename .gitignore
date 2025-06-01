@@ -179,3 +179,5 @@ postgres_data/
 
 .myenv/
 *.parquet
+logs/
+artifacts/
