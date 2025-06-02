@@ -156,3 +156,9 @@
 ### 2025-06-01
 - [x] Created a pre-processing pipeline for tabular data
 - [x] Structured folders to fit a ML pipeline
+
+### 2025-06-02
+- [x] Refactored proper data preprocessing  (`dataset.py`) and data loading (`data_loader.py`)
+- [x] Configured `config.yml` for easier hyperparameter setting
+- [x] Configured `schemas.py` to handle data, model, training, evaluation, logging and experimental config
+- [x] The `logging_utils.py` will be used to log into a file and also in the console

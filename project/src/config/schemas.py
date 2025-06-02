@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Literal
+from pydantic import BaseModel, Field, model_validator
+from typing import List, Literal, Optional
 from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 class DataConfig(BaseModel):
@@ -15,8 +16,7 @@ class DataConfig(BaseModel):
 
 
 class ModelConfig(BaseModel):
-    architecture: Literal["rf", "gru", "grud"] = Field("rf")
-    num_classes: int = Field(10)
+    model_type: Literal["rf", "gru", "grud"] = Field("rf")
     input_size: int = Field(224)
     dropout_rate: float = Field(0.5, ge=0.0, le=1.0)
 
@@ -29,7 +29,11 @@ class TrainingConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    log_dir: Path = Field(Path("../outputs/experiments/logs"))
+    log_dir = Path(__file__).resolve().parents[2] / "logs"
+    log_dir: Path = Field(log_dir, description="Directory for log files")
+    expirement_id: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
+    )
     log_level: Literal["info", "debug", "warning"] = Field("info")
 
 
@@ -50,19 +54,25 @@ class ExperimentConfig(BaseModel):
     training: TrainingConfig
     logging: LoggingConfig
     evaluation: EvaluationConfig
-    save_best_model: bool = Field(True)
-    if save_best_model:
-        save_model_every: int = Field(1)
-        # create a directory with experiment_id
-        try:
-            experiment_dir = Path(experiment_dir)
-        except Exception as e:
-            raise ValueError(
-                f"Invalid experiment directory: {experiment_dir}. Error: {e}"
-            )
-        best_model_path: Path = Field(Path(f"{experiment_dir}/{experiment_id}.pth"))
+    save_best_model: bool = True
+    save_model_every: Optional[int] = 1
+    best_model_path: Optional[Path] = None
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        # Create the experiment directory if it doesn't exist
+    @model_validator(mode="before")
+    def set_defaults(cls, values):
+        exp_dir = Path(values.get("experiment_dir", "../outputs/experiments"))
+        exp_id = values.get("experiment_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
+        values["experiment_dir"] = exp_dir
+        values["experiment_id"] = exp_id
+        if not exp_dir.exists():
+            exp_dir.mkdir(parents=True, exist_ok=True)
+        if values.get("save_best_model", True):
+            values["best_model_path"] = exp_dir / f"{exp_id}.pth"
+        return values
+
+    def create_dirs(self):
+        """Create directories for the experiment."""
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
+        (self.experiment_dir / "logs").mkdir(parents=True, exist_ok=True)
+        (self.experiment_dir / "models").mkdir(parents=True, exist_ok=True)
+        (self.experiment_dir / "results").mkdir(parents=True, exist_ok=True)

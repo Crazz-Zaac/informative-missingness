@@ -1,3 +1,24 @@
 data:
   tabular:
-    
+    data_path: "../dataset/preprocessed_tabular/"
+    window_size: 7 # intitial window size for tabular data
+
+model:
+  tabular:
+    model_type: "RandomForestClassifier"
+    hyperparameters:
+      n_estimators: 100
+      max_depth: 10
+      random_state: 42
+      # dropout_rate: 0.1
+    training:
+      batch_size: 32
+      epochs: 50
+      learning_rate: 0.001
+      validation_split: 0.2
+  temporal:
+    model_type: ["GRU", "GRU-D"]
+logging:
+  log_dir: "../logs/"
+  log_level: "INFO"
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

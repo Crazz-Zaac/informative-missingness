@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Dict
 
-from tabular_preprocessing import TabularPreprocessingConfig
+from .tabular_preprocessing import TabularPreprocessingConfig
 
 
 class TabularDataset:
@@ -13,7 +13,7 @@ class TabularDataset:
         """Load and concatenate multiple Parquet files."""
         config_obj = TabularPreprocessingConfig(window_size=self.window_size)
         config_obj.process_all_files()
-        numeric_data, categorical_data = config_obj.load_and_prepare_data(
+        numeric_data, categorical_data = config_obj.preprocess_and_save(
             self.input_filename
         )
         return {
