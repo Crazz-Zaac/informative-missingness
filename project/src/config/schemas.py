@@ -29,8 +29,8 @@ class TrainingConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    log_dir = Path(__file__).resolve().parents[2] / "logs"
-    log_dir: Path = Field(log_dir, description="Directory for log files")
+    log_path = Path(__file__).resolve().parents[2] / "logs"
+    log_dir: Path = Field(log_path, description="Directory for log files")
     expirement_id: str = Field(
         default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
     )

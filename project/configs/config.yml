@@ -19,6 +19,5 @@ model:
   temporal:
     model_type: ["GRU", "GRU-D"]
 logging:
-  log_dir: "../logs/"
   log_level: "INFO"
   log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
