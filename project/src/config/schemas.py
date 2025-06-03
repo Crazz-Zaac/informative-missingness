@@ -29,13 +29,13 @@ class TrainingConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    log_path = Path(__file__).resolve().parents[2] / "logs"
+    log_path: Path = Path(__file__).resolve().parents[2] / "logs"
     log_dir: Path = Field(log_path, description="Directory for log files")
     expirement_id: str = Field(
         default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
     )
     log_level: Literal["info", "debug", "warning"] = Field("info")
-
+    
 
 class EvaluationConfig(BaseModel):
     metrics: List[Literal["accuracy", "f1", "precision", "recall"]] = Field(
@@ -44,8 +44,11 @@ class EvaluationConfig(BaseModel):
 
 
 class ExperimentConfig(BaseModel):
+    experiment_path: Path = Path(__file__).resolve().parents[2] / "outputs" / "experiments"
     experiment_name: str = Field("default_experiment")
-    experiment_dir: Path = Field(Path("../outputs/experiments"))
+    experiment_dir: Path = Field(
+        default_factory=lambda: Path(__file__).resolve().parents[2] / "outputs" / "experiments"
+    )
     experiment_id: str = Field(
         default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
     )

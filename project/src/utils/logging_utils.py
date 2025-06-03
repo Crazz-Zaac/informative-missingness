@@ -1,3 +1,4 @@
+from src.config.schemas import LoggingConfig
 import logging
 from pathlib import Path
 import os
@@ -5,17 +6,14 @@ import os
 
 DEFAULT_LOG_DIR = Path(__file__).resolve().parents[2] / "logs"
 
-def setup_logging(expirement_id: str, log_dir: Path, log_level: str = "info") -> None:
+def setup_logging(config: LoggingConfig) -> Path:
     """Set up logging configuration."""
-    if not isinstance(log_dir, Path):
-        raise ValueError("log_dir must be a Path object.")
-    if log_dir is None:
-        log_dir = DEFAULT_LOG_DIR
-    
-    # file logging
-    if not log_dir.exists():
-        log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / f"{expirement_id}.log"
+    log_dir: Path = config.log_dir if config.log_dir else DEFAULT_LOG_DIR
+    log_file = log_dir / f"{config.expirement_id}.log"
+    expirement_id = config.expirement_id
+    log_level = config.log_level
+    if not expirement_id:
+        raise ValueError("Experiment ID must be provided in the logging configuration.")
     
     # clear any existing handlers
     for handler in logging.root.handlers[:]:
@@ -23,7 +21,7 @@ def setup_logging(expirement_id: str, log_dir: Path, log_level: str = "info") ->
 
     logging.basicConfig(
         filename=log_file,
-        level=getattr(logging, log_level.upper(), logging.INFO),
+        level=getattr(logging, config.log_level.upper()),
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
@@ -35,3 +33,4 @@ def setup_logging(expirement_id: str, log_dir: Path, log_level: str = "info") ->
     logging.getLogger().addHandler(console_handler)
     
     logging.info("Logging setup complete. Log file: %s", log_file)
+    return log_dir

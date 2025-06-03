@@ -1,5 +1,5 @@
-from .data_loader import data_loader
-from .dataset import Dataset
+from .data_loader import load_config
+from .dataset import TabularDataset
 from .tabular_preprocessing import TabularPreprocessingConfig
 from .temporal_preprocessing import TemporalPreprocessingConfig
 # from .temporal_preprocessing import temporal_preprocessing
