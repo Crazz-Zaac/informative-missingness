@@ -3,8 +3,6 @@ from src.config.schemas import ModelConfig
 
 
 class RandomForestModel:
-    """Pure model definition and configuration"""
-
     def __init__(self, config: ModelConfig):
         self.config = config
         self.model = self._initialize_model()

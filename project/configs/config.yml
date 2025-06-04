@@ -1,23 +1,26 @@
+experiment_name: "informative_missingness"
+
 data:
   tabular:
     data_path: "../dataset/preprocessed_tabular/"
     window_size: 7 # intitial window size for tabular data
+  temporal:
+    data_path: "../dataset/preprocessed_temporal/"
 
 model:
-  tabular:
-    model_type: "RandomForestClassifier"
-    hyperparameters:
-      n_estimators: 100
-      max_depth: 10
-      random_state: 42
-      class_weight: "balanced"
-      min_samples_split: 2
-      min_samples_leaf: 1
-      # dropout_rate: 0.1
-    training:
-      validation_split: 0.2
-  temporal:
-    model_type: ["GRU", "GRU-D"]
+  model_type: "RandomForestClassifier"
+  hyperparameters:
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+    class_weight: "balanced"
+    min_samples_split: 2
+    min_samples_leaf: 1
+    # dropout_rate: 0.1
+training:
+  validation_split: 0.2
+evaluation:
+  metrics: ["accuracy", "f1_score", "precision", "recall"]
 logging:
-  log_level: "INFO"
+  log_level: "info" # options: debug, info, warning, error, critical
   log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

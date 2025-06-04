@@ -23,3 +23,11 @@ class ExperimentLogger:
         """Log model parameters."""
         for key, value in params.items():
             logging.info(f"Parameter {key}: {value}")
+    
+    def finish(self):
+        """Finalize logging."""
+        logging.info("Experiment completed.")
+        #closing any resources or handlers 
+        for handler in self.logger.handlers:
+            handler.close()
+            self.logger.removeHandler(handler)

@@ -13,10 +13,11 @@ class TabularDataset:
         """Load and concatenate multiple Parquet files."""
         config_obj = TabularPreprocessingConfig(window_size=self.window_size)
         config_obj.process_all_files()
-        numeric_data, categorical_data = config_obj.preprocess_and_save(
+        numeric_data_path, categorical_data_path = config_obj.preprocess_and_save(
             self.input_filename
         )
+        print(numeric_data_path, categorical_data_path)
         return {
-            "numeric_data": numeric_data,
-            "categorical_data": categorical_data,
+            "numeric_data": pd.read_parquet(numeric_data_path),
+            "categorical_data": pd.read_parquet(categorical_data_path),
         }

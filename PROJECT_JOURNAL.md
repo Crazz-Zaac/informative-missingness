@@ -163,3 +163,6 @@
 - [x] Configured `schemas.py` to handle data, model, training, evaluation, logging and experimental config
 - [x] The `logging_utils.py` will be used to log into a file and also in the console
 - [x] Random Forest model setup 
+
+### 2025-06-04
+- [x] Debugging `typing`, `parameter initialization`, `file path` errors

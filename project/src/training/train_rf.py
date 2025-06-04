@@ -13,7 +13,7 @@ class RandomForestTrainer:
     def __init__(self, config: ExperimentConfig):
         self.config = config
         self.logger = ExperimentLogger(config)
-        self.dataset = TabularDataset(window_size=config.data.window_size)
+        self.dataset = TabularDataset(window_size=self.config.data.tabular.window_size)
         self.model = RandomForestModel(config.model)
 
     def load_data(self) -> tuple:

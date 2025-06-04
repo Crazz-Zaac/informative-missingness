@@ -33,8 +33,7 @@ class TabularPreprocessingConfig(BaseModel):
 
     def load_data(self, filename: str) -> pd.DataFrame:
         """Load patient data from a specific Parquet file."""
-        filepath = os.path.join(self.raw_data_dir, filename)
-        patients_data = pd.read_parquet(filepath)
+        patients_data = pd.read_parquet(self.raw_data_dir / filename)
         patients_data["charttime"] = pd.to_datetime(patients_data["charttime"])
         patients_data["dischtime"] = pd.to_datetime(patients_data["dischtime"])
         return patients_data
