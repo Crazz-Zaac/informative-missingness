@@ -17,7 +17,7 @@
 
 ---
 
-### 2025-05-10
+### 2025-05-10: Data Preparation and Setup
 - [x] Decided to use the docker version of `postgres` 
 - [x] Configured the `docker-compose.yml` file with:
     - initial mount of `postgres/create.sql` and `postgres/load.sql`
@@ -147,7 +147,9 @@
 - [x] Project Initial Setup
     - [x] Folder and files structuring
 
-### 2025-05-29
+---
+
+### 2025-05-29: Project Setup
 - [x] Fixed the `.env` variables to be read successfully.
 - [x] Solved the issue with heavy data loading by just taking the chunk of the file and saving to a `.parquet` file 
 - [x] Solved issues with docker memory size and reconfigured the `.yml` file
@@ -164,5 +166,6 @@
 - [x] The `logging_utils.py` will be used to log into a file and also in the console
 - [x] Random Forest model setup 
 
-### 2025-06-04
+--- 
+### 2025-06-04: Refactoring and debugging
 - [x] Debugging `typing`, `parameter initialization`, `file path` errors
