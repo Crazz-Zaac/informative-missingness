@@ -7,20 +7,20 @@ from pathlib import Path
 
 
 class TabularPreprocessingConfig(BaseModel):
-    # Directory paths for raw and preprocessed data
-    parent_dir: Path = Path(__file__).parent.parent.parent
-    raw_data_dir: Path = Field(
-        default=parent_dir / "dataset" / "raw",
-        description="Directory containing raw Parquet files",
-    )
-    preprocessed_data_dir: Path = Field(
-        default=parent_dir / "dataset" / "preprocessed_tabular",   
-        description="Directory to save processed Parquet files",
-    )
-    window_size: int = Field(
-        default=7,
-        description="Size of the sliding window for time series data (e.g., 7 or 14 days)",
-    )        
+    raw_data_dir: Path
+    preprocessed_data_dir: Path
+    window_size: int
+
+    @classmethod
+    # Create a configuration instance with default paths and specified window size.
+    def from_defaults(cls, window_size: int = 7) -> "TabularPreprocessingConfig":
+        """Create a configuration instance with default paths and specified window size."""
+        parent_dir = Path(__file__).parent.parent.parent
+        return cls(
+            raw_data_dir=parent_dir / "dataset" / "raw",
+            preprocessed_data_dir=parent_dir / "dataset" / "preprocessed_tabular",
+            window_size=window_size,
+        )
 
     def extract_window_size(self, filename: str) -> int:
         """Extract window_size (e.g., 7 or 14) from filenames like '*_7_days.parquet'."""
@@ -34,8 +34,8 @@ class TabularPreprocessingConfig(BaseModel):
     def load_data(self, filename: str) -> pd.DataFrame:
         """Load patient data from a specific Parquet file."""
         patients_data = pd.read_parquet(self.raw_data_dir / filename)
-        patients_data["charttime"] = pd.to_datetime(patients_data["charttime"])
-        patients_data["dischtime"] = pd.to_datetime(patients_data["dischtime"])
+        patients_data.loc[:, "charttime"] = pd.to_datetime(patients_data["charttime"])
+        patients_data.loc[:, "dischtime"] = pd.to_datetime(patients_data["dischtime"])
         return patients_data
 
     def prepare_numeric_data(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -53,7 +53,8 @@ class TabularPreprocessingConfig(BaseModel):
 
     def prepare_categorical_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """Same as your existing method"""
-        data["has_measurement"] = 1
+        data = data.copy()
+        data.loc[:, "has_measurement"] = 1
         categorical_data = data.pivot_table(
             index="hadm_id",
             columns="feature_id",
@@ -62,7 +63,9 @@ class TabularPreprocessingConfig(BaseModel):
             fill_value=0,
         )
         categorical_data = categorical_data.sort_index(axis=1)
-        categorical_data.columns = pd.Index([col + "_measured" for col in categorical_data.columns])
+        categorical_data.columns = pd.Index(
+            [col + "_measured" for col in categorical_data.columns]
+        )
         return categorical_data
 
     def preprocess_and_save(self, input_filename: str):
@@ -71,7 +74,7 @@ class TabularPreprocessingConfig(BaseModel):
         patients_data = self.load_data(input_filename)
 
         # Calculate days before discharge
-        patients_data["days_before_discharge"] = (
+        patients_data.loc[:, "days_before_discharge"] = (
             patients_data["dischtime"] - patients_data["charttime"]
         ).dt.days
 
@@ -79,10 +82,10 @@ class TabularPreprocessingConfig(BaseModel):
         patients_data = patients_data[
             (patients_data["days_before_discharge"] >= 0)
             & (patients_data["days_before_discharge"] < self.window_size)
-        ]
+        ].copy()
 
         # Create feature identifiers
-        patients_data["feature_id"] = (
+        patients_data.loc[:, "feature_id"] = (
             "itemid_"
             + patients_data["itemid"].astype(str)
             + "_day_"
@@ -131,9 +134,9 @@ class TabularPreprocessingConfig(BaseModel):
 #     config = TabularPreprocessingConfig()
 #     config.process_all_files()
 
-    # If you need different window sizes for different files:
-    # config_7 = TabularPreprocessingConfig(window_size=7)
-    # config_7.preprocess_and_save("your_7_days_file.parquet")
+# If you need different window sizes for different files:
+# config_7 = TabularPreprocessingConfig(window_size=7)
+# config_7.preprocess_and_save("your_7_days_file.parquet")
 
-    # config_14 = TabularPreprocessingConfig(window_size=14)
-    # config_14.preprocess_and_save("your_14_days_file.parquet")
+# config_14 = TabularPreprocessingConfig(window_size=14)
+# config_14.preprocess_and_save("your_14_days_file.parquet")

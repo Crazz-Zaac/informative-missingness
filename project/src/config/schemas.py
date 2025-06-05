@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 from pathlib import Path
 from enum import Enum
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Literal
 
 
 class ModelTypeEnum(str, Enum):
@@ -46,6 +46,7 @@ class GRUHyperParams(BaseModel):
 class TabularDataConfig(BaseModel):
     data_path: str
     window_size: int
+    feature_type: Literal["numeric", "categorical"] = "numeric"
 
 
 class TemporalDataConfig(BaseModel):
@@ -53,8 +54,9 @@ class TemporalDataConfig(BaseModel):
 
 
 class DataConfig(BaseModel):
-    tabular: Optional[TabularDataConfig] = None
-    temporal: Optional[TemporalDataConfig] = None
+    test_size: float = 0.2
+    tabular: TabularDataConfig
+    temporal: TemporalDataConfig
 
 
 class ModelConfig(BaseModel):
@@ -97,6 +99,7 @@ class ExperimentConfig(BaseModel):
     )
     data: DataConfig
     model: ModelConfig
+    random_state: int = 42
     training: TrainingConfig
     logging: LoggingConfig
     evaluation: EvaluationConfig

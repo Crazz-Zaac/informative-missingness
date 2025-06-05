@@ -1,9 +1,11 @@
 experiment_name: "informative_missingness"
 
 data:
+  test_size: 0.2 # proportion of data to be used for testing
   tabular:
     data_path: "../dataset/preprocessed_tabular/"
     window_size: 7 # intitial window size for tabular data
+    feature_type: "categorical" # categorical
   temporal:
     data_path: "../dataset/preprocessed_temporal/"
 

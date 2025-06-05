@@ -18,7 +18,13 @@ class RandomForestTrainer:
 
     def load_data(self) -> tuple:
         data_dict = self.dataset.load_data()
-        df = pd.concat([data_dict["numeric_data"], data_dict["categorical_data"]], axis=1)
+        feature_type = self.config.data.tabular.feature_type
+        if feature_type == "numeric":
+            df = data_dict["numeric_data"].copy()
+        elif feature_type == "categorical":
+            df = data_dict["categorical_data"].copy()
+        else:
+            raise ValueError(f"Unsupported feature type: {feature_type}. Choose 'numeric' or 'categorical'.")
         return df.drop(columns=["target"]), df["target"]
 
     def run_training(self):
