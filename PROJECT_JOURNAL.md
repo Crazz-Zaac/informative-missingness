@@ -169,3 +169,9 @@
 --- 
 ### 2025-06-04: Refactoring and debugging
 - [x] Debugging `typing`, `parameter initialization`, `file path` errors
+
+### 2025-06-05
+- Issues faced and fixed
+    - [x] Attribute Errors
+    - [x] File path issues. Lesson learnt: avoid using `os.path.join`, instead use `Path(__file__).parent` for more surity.
+    - [x] Pydantic validation errors. 
