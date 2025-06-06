@@ -206,7 +206,6 @@
 
 
 - Look at feature importance in Random Forest 
-   - best_model.feature_importances_ -> importance value for each feature
-https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html
+   - [best_model.feature_importances_](https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html) -> importance value for each feature
 oversampling (only training set) imblearn
 Class_weight ({0:1, 1:2})
