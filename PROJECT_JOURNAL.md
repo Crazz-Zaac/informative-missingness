@@ -142,7 +142,16 @@
         - Train it on X, M and Delta with different combinations
         - Then start with on GRU and GRU-D
         - Train it on X, M and Delta with different combinations
-        - Compare their performances
+        - Compare their perfo- Aggregate by 6 hours in the preprocessing instead of daily -> every two hours/6 hours
+- Stratify the data such that the model doesn't see the data that was used during the training
+    - To generate Cross Validation Split
+- Train model on demographic data age, gender, ethinicity, instead of `target` colummn in the Cohort file.
+- Modify pipeline such that:
+    - To give different target
+    - To change the aggregation window 2, 6 ,12 ,24 hrs
+    - To add `delta` table (time since last observed)
+- Look at feature importance in Random Forest
+    - best model.doc feature importancermances
         - Next part: Patterns of M on different demographic data
 - [x] Project Initial Setup
     - [x] Folder and files structuring
@@ -175,3 +184,29 @@
     - [x] Attribute Errors
     - [x] File path issues. Lesson learnt: avoid using `os.path.join`, instead use `Path(__file__).parent` for more surity.
     - [x] Pydantic validation errors. 
+
+### 2025-06-06
+[x] Attended a meeting (11 AM)
+- Aggregate by 6 hours in the preprocessing instead of daily -> every two hours/6 hours [2,6,12,24]
+
+
+- Stratify the data such that the model doesn't see the data (from the same patient) that was used during the training
+- To generate Cross Validation Split on the patients instead of admissions
+- train/test splits on patients -> train/test splits on admissions for those patients
+
+
+- Train model on demographic data age, gender, ethnicity, instead of `target` column in the Cohort file. [patient table in mimic, small, can read in pandas]
+
+
+- Modify pipeline such that:
+   - To give different target
+   - To change the aggregation window 2, 6 ,12 ,24 hrs
+   - To add `delta` table (time since last observed)
+   - To train added models (STraTs pipeline - GRU, LSTM) 
+
+
+- Look at feature importance in Random Forest 
+   - best_model.feature_importances_ -> importance value for each feature
+https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html
+oversampling (only training set) imblearn
+Class_weight ({0:1, 1:2})
