@@ -18,6 +18,10 @@ class RandomForestModel:
             min_samples_split=self.config.hyperparameters.min_samples_split,
             min_samples_leaf=self.config.hyperparameters.min_samples_leaf,
         )
+    
+    def fit(self, X, y):
+        """Fit the Random Forest model to the training data."""
+        self.model.fit(X, y)
 
     def predict(self, X):
         return self.model.predict(X)

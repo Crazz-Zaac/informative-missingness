@@ -47,6 +47,9 @@ class TabularDataConfig(BaseModel):
     data_path: str
     window_size: int
     feature_type: Literal["numeric", "categorical"] = "numeric"
+    aggregation_window_size: int = Field(
+        2, gt=0, lt=25, description="Size of the aggregation window in days"
+    )
 
 
 class TemporalDataConfig(BaseModel):

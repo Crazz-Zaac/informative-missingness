@@ -5,7 +5,8 @@ data:
   tabular:
     data_path: "../dataset/preprocessed_tabular/"
     window_size: 7 # intitial window size for tabular data
-    feature_type: "categorical" # categorical
+    feature_type: "numeric" # categorical
+    aggregation_window_size: 2 # hours for aggregation 
   temporal:
     data_path: "../dataset/preprocessed_temporal/"
 

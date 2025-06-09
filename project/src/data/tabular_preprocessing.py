@@ -10,6 +10,7 @@ class TabularPreprocessingConfig(BaseModel):
     raw_data_dir: Path
     preprocessed_data_dir: Path
     window_size: int
+    aggregation_window_size: int
 
     @classmethod
     # Create a configuration instance with default paths and specified window size.
@@ -20,6 +21,7 @@ class TabularPreprocessingConfig(BaseModel):
             raw_data_dir=parent_dir / "dataset" / "raw",
             preprocessed_data_dir=parent_dir / "dataset" / "preprocessed_tabular",
             window_size=window_size,
+            aggregation_window_size=2,  # Default aggregation window size
         )
 
     def extract_window_size(self, filename: str) -> int:
@@ -78,7 +80,7 @@ class TabularPreprocessingConfig(BaseModel):
             patients_data["dischtime"] - patients_data["charttime"]
         ).dt.days
 
-        # Filter data based on window_size
+        # aggregating all lab events per admission into a single row with many columns
         patients_data = patients_data[
             (patients_data["days_before_discharge"] >= 0)
             & (patients_data["days_before_discharge"] < self.window_size)
@@ -123,10 +125,19 @@ class TabularPreprocessingConfig(BaseModel):
         )
         return numeric_output, categorical_output
 
-    def process_all_files(self):
-        """Process all Parquet files in the raw directory"""
+    def process_window_file_only(self):
+        """Process the file that matches the specified window size"""
+        pattern = re.compile(rf".*_{self.window_size}_days_prior\.parquet")
+
         for file in self.raw_data_dir.glob("*.parquet"):
-            self.preprocess_and_save(file.name)
+            if pattern.match(file.name):
+                print(f"Processing: {file.name}")
+                self.preprocess_and_save(file.name)
+                return  # process only the first match
+
+        raise FileNotFoundError(
+            f"No file found in {self.raw_data_dir} for window size {self.window_size}"
+        )
 
 
 # if __name__ == "__main__":
