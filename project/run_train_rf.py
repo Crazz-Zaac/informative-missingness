@@ -1,11 +1,18 @@
-# run_rf_train.py
-
 from pathlib import Path
 from src.training.train_rf import RandomForestTrainer
+from src.config.schemas import ExperimentConfig
+from src.utils.logging_utils import setup_logging
+import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent  # Adjust based on your structure
 CONFIG_PATH = PROJECT_ROOT / "configs" / "config.yml"
 if __name__ == "__main__":
-    config_path = Path(CONFIG_PATH)  # Adjust path if needed
-    trainer = RandomForestTrainer.from_yaml(config_path)
+    with open(CONFIG_PATH, "r") as file:
+        config_data = yaml.safe_load(file)
+    config = ExperimentConfig(**config_data)
+
+    # setup logging
+    log_dir = setup_logging(config.logging)
+
+    trainer = RandomForestTrainer.from_yaml(config_path=CONFIG_PATH)
     trained_model = trainer.run_training()

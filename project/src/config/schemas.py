@@ -81,6 +81,7 @@ class LoggingConfig(BaseModel):
         default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
     )
     log_level: LoggingLevelEnum
+    log_format: str = "%(asctime)s - %(levelname)s - %(message)s"
 
 
 class EvaluationConfig(BaseModel):

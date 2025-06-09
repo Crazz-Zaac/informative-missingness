@@ -10,7 +10,7 @@ class TabularPreprocessingConfig(BaseModel):
     raw_data_dir: Path
     preprocessed_data_dir: Path
     window_size: int
-    aggregation_window_size: int
+    aggregation_window_size: int  # aggregation by hours, e.g., 2 hours
 
     @classmethod
     # Create a configuration instance with default paths and specified window size.
@@ -21,7 +21,7 @@ class TabularPreprocessingConfig(BaseModel):
             raw_data_dir=parent_dir / "dataset" / "raw",
             preprocessed_data_dir=parent_dir / "dataset" / "preprocessed_tabular",
             window_size=window_size,
-            aggregation_window_size=2,  # Default aggregation window size
+            aggregation_window_size=2,  # Default aggregation window size (e.g., 2 hours)
         )
 
     def extract_window_size(self, filename: str) -> int:

@@ -6,7 +6,7 @@ import yaml
 from src.config.schemas import ExperimentConfig
 from src.data.dataset import TabularDataset
 from src.models.random_forest import RandomForestModel
-from src.training.logger import ExperimentLogger
+from loguru import logger
 
 
 class RandomForestTrainer:
@@ -14,7 +14,7 @@ class RandomForestTrainer:
 
     def __init__(self, config: ExperimentConfig):
         self.config = config
-        self.logger = ExperimentLogger(config)
+        # self.logger = ExperimentLogger(config)
         self.dataset = TabularDataset(
             window_size=self.config.data.tabular.window_size, config=self.config
         )
@@ -42,18 +42,19 @@ class RandomForestTrainer:
             y_pred = self.model.predict(X_test)
             report = classification_report(y_test, y_pred, output_dict=True)
 
+            # logging model parameters
+            logger.info("Experiment started...")
+            for key, value in self.config.model.hyperparameters.model_dump().items():
+                logger.info(f"Parameter - {key}: {value}")
+            
             # Logging
-            self.logger.log_metrics(
-                {
-                    "accuracy": accuracy_score(y_test, y_pred),
-                    "f1_score": report["weighted avg"]["f1-score"],
-                }
-            )
+            logger.info(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+            logger.info(f"F1 Score: {report['weighted avg']['f1-score']:.4f}")
 
             return self.model
 
         finally:
-            self.logger.finish()
+            logger.info("Experiment completed.")
 
     @classmethod
     def from_yaml(cls, config_path: Path):

@@ -1,36 +1,38 @@
-from src.config.schemas import LoggingConfig
-import logging
+from loguru import logger
 from pathlib import Path
-import os
-
+from src.config.schemas import LoggingConfig
+import sys
 
 DEFAULT_LOG_DIR = Path(__file__).resolve().parents[2] / "logs"
 
 def setup_logging(config: LoggingConfig) -> Path:
-    """Set up logging configuration."""
-    log_dir: Path = config.log_dir if config.log_dir else DEFAULT_LOG_DIR
-    log_file = log_dir / f"{config.expirement_id}.log"
-    expirement_id = config.expirement_id
-    log_level = config.log_level
-    if not expirement_id:
-        raise ValueError("Experiment ID must be provided in the logging configuration.")
-    
-    # clear any existing handlers
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
+    """Set up loguru-based logging using configuration."""
+    log_dir = config.log_dir or DEFAULT_LOG_DIR
+    log_dir.mkdir(parents=True, exist_ok=True)
 
-    logging.basicConfig(
-        filename=log_file,
-        level=getattr(logging, config.log_level.upper()),
-        format="%(asctime)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+    log_file = log_dir / f"{config.expirement_id}.log"
+    
+    logger.remove()  # Remove default handler
+
+    # Add file logging
+    logger.add(
+        log_file,
+        level=config.log_level.upper(),
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+        rotation="10 MB",
+        retention="10 days",
+        compression="zip",
+        enqueue=True,
+        backtrace=True,
+        diagnose=True,
     )
 
-    # console logging
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
-    console_handler.setFormatter(logging.Formatter("%(message)s"))
-    logging.getLogger().addHandler(console_handler)
-    
-    logging.info("Logging setup complete. Log file: %s", log_file)
+    # Add console logging
+    logger.add(
+        sys.stdout,
+        level=config.log_level.value.upper(),
+        format="<green>{time:HH:mm:ss}</green> | <level>{level}</level> | {message}",
+    )
+
+    logger.info(f"Loguru logging setup complete. Log file: {log_file}")
     return log_dir
