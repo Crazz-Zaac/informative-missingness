@@ -55,7 +55,7 @@ class TabularPreprocessingConfig(BaseModel):
         """Prepare numeric data by pivoting and filling missing values."""
         data = data.copy()
         numeric_data = data.pivot_table(
-            index="hadm_id",
+            index="subject_id",
             columns="feature_id",
             values="valuenum",
             aggfunc="mean",
@@ -70,7 +70,7 @@ class TabularPreprocessingConfig(BaseModel):
         data = data.copy()
         data.loc[:, "has_measurement"] = 1
         categorical_data = data.pivot_table(
-            index="hadm_id",
+            index="subject_id",
             columns="feature_id",
             values="has_measurement",
             aggfunc="max",
@@ -114,7 +114,7 @@ class TabularPreprocessingConfig(BaseModel):
 
         # Handle targets
         targets = (
-            patients_data[["hadm_id", "target"]].drop_duplicates().set_index("hadm_id")
+            patients_data[["subject_id", "target"]].drop_duplicates().set_index("subject_id")
         )
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet

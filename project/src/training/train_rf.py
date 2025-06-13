@@ -37,7 +37,7 @@ class RandomForestTrainer:
                 random_state=self.config.random_state,
             )
             train_idx, test_idx = next(
-                gss.split(X, y, groups=X["hadm_id"])
+                gss.split(X, y, groups=X["subject_id"])
             )
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
