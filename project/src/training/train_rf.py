@@ -1,5 +1,6 @@
 from sklearn.metrics import classification_report, accuracy_score
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
 from pathlib import Path
 import pandas as pd
 import yaml
@@ -28,12 +29,24 @@ class RandomForestTrainer:
         try:
             # Data loading
             X, y = self.load_data()
-            X_train, X_test, y_train, y_test = train_test_split(
-                X,
-                y,
+            # split data into training and test sets
+            # Using GroupShuffleSplit to ensure that the same group is not in both train and test sets
+            gss = GroupShuffleSplit(
+                n_splits=1,
                 test_size=self.config.data.test_size,
                 random_state=self.config.random_state,
             )
+            train_idx, test_idx = next(
+                gss.split(X, y, groups=X["hadm_id"])
+            )
+            X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+            y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+            # X_train, X_test, y_train, y_test = train_test_split(
+            #     X,
+            #     y,
+            #     test_size=self.config.data.test_size,
+            #     random_state=self.config.random_state,
+            # )
 
             # Training
             self.model.fit(X_train, y_train)
