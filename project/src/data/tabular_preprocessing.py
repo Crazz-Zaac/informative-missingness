@@ -109,6 +109,7 @@ class TabularPreprocessingConfig(BaseModel):
             + patients_data["itemid"].astype(str)
             + "_last_"
             + patients_data["time_bin"].astype(str)
+            + "_hours_prior"
         )
 
         # Handle targets
