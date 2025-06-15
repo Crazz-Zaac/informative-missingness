@@ -7,7 +7,7 @@ data:
     window_size: 7 # intitial window size for tabular data
     feature_type: "categorical" # categorical, numeric
     aggregation_window_size: 12 # hours for aggregation 
-    training_feature: "target" # gender, ethnicity
+    training_feature: "race" # target, gender, race, anchor_age
     age_threshold: 60 # age threshold for training feature
   temporal:
     data_path: "../dataset/preprocessed_temporal/"

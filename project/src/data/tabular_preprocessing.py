@@ -193,7 +193,7 @@ class TabularPreprocessingConfig(BaseModel):
 
         # Handle targets
         targets = (
-            patients_data[["subject_id", "hadm_id", "target"]]
+            patients_data[["subject_id", "hadm_id"] + [self.training_feature]]
             .drop_duplicates()
             .set_index("hadm_id")
         )
