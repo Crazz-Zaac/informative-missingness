@@ -46,10 +46,33 @@ class GRUHyperParams(BaseModel):
 class TabularDataConfig(BaseModel):
     data_path: str
     window_size: int
-    feature_type: Literal["numeric", "categorical"] = "numeric"
+    feature_type: Literal["numeric", "categorical"] 
     aggregation_window_size: int = Field(
         2, gt=0, lt=25, description="Size of the aggregation window in days"
     )
+    training_feature: str
+    age_threshold: int
+
+    @model_validator(mode="before")
+    def validate_training_feature(cls, values):
+        if values.get("training_feature") not in [
+            "target",
+            "gender",
+            "anchor_age",
+            "race",
+        ]:
+            raise ValueError(
+                "training_feature must be one of ['target', 'gender', 'anchor_age', 'race']"
+            )
+        if values.get("training_feature") == "anchor_age":
+            if (
+                values.get("age_threshold", 0) < 18
+                or values.get("age_threshold", 0) >= 91
+            ):
+                raise ValueError(
+                    "age_threshold must be between 18 and 90 for anchor_age feature"
+                )
+        return values
 
 
 class TemporalDataConfig(BaseModel):
@@ -57,7 +80,7 @@ class TemporalDataConfig(BaseModel):
 
 
 class DataConfig(BaseModel):
-    test_size: float = 0.2
+    test_size: float 
     tabular: TabularDataConfig
     temporal: TemporalDataConfig
 

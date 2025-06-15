@@ -1,5 +1,6 @@
 from sklearn.metrics import classification_report, accuracy_score
-from sklearn.model_selection import train_test_split
+
+# from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GroupShuffleSplit
 from pathlib import Path
 import pandas as pd
@@ -21,45 +22,41 @@ class RandomForestTrainer:
         )
         self.model = RandomForestModel(config=config.model)
 
-    def load_data(self) -> tuple:
-        df = self.dataset.load_data()
-        return df.drop(columns=["target"]), df["target"]
-
     def run_training(self):
         try:
             # Data loading
-            X, y = self.load_data()
+            logger.info("Loading the data...")
+            X, y = self.dataset.load_data()
             # split data into training and test sets
             # Using GroupShuffleSplit to ensure that the same group is not in both train and test sets
+            logger.info("Splitting the data into training and test sets...")
+            if X.empty or y.empty:
+                raise ValueError("Loaded data is empty. Please check the dataset.")
             gss = GroupShuffleSplit(
                 n_splits=1,
                 test_size=self.config.data.test_size,
                 random_state=self.config.random_state,
             )
-            train_idx, test_idx = next(
-                gss.split(X, y, groups=X["subject_id"])
-            )
+            train_idx, test_idx = next(gss.split(X, y, groups=X["subject_id"]))
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-            # X_train, X_test, y_train, y_test = train_test_split(
-            #     X,
-            #     y,
-            #     test_size=self.config.data.test_size,
-            #     random_state=self.config.random_state,
-            # )
 
             # Training
+            logger.info("Training the Random Forest model...")
+            if X_train.empty or y_train.empty:
+                raise ValueError("Training data is empty. Please check the dataset.")
             self.model.fit(X_train, y_train)
 
             # Evaluation
+            logger.info("Evaluating the model...")
             y_pred = self.model.predict(X_test)
             report = classification_report(y_test, y_pred, output_dict=True)
 
             # logging model parameters
-            logger.info("Experiment started...")
+            logger.info("Logging model parameters...")
             for key, value in self.config.model.hyperparameters.model_dump().items():
                 logger.info(f"Parameter - {key}: {value}")
-            
+
             # Logging
             logger.info(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
             logger.info(f"F1 Score: {report['weighted avg']['f1-score']:.4f}")
