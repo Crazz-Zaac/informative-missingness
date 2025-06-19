@@ -197,7 +197,7 @@
 
 - Train model on demographic data age, gender, ethnicity, instead of `target` column in the Cohort file. [patient table in mimic, small, can read in pandas]
 
-
+ 
 - Modify pipeline such that:
    - To give different target
    - To change the aggregation window 2, 6 ,12 ,24 hrs
