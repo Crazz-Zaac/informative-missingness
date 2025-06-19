@@ -50,7 +50,8 @@ class RandomForestTrainer:
             # Evaluation
             logger.info("Evaluating the model...")
             y_pred = self.model.predict(X_test)
-            report = classification_report(y_test, y_pred, output_dict=True)
+            # zero_division=0 to avoid division by zero in classification report
+            report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
 
             # logging model parameters
             logger.info("Logging model parameters...")

@@ -32,25 +32,3 @@ class TabularDataset:
         X_trainable = data.drop(columns=self.training_feature)
         y_target = data[self.training_feature]
         return X_trainable, y_target
-        # config_obj.process_window_file_only()
-        # if self.feature_type == "numeric":
-        #     numeric_data = config_obj.preprocess_and_save(self.input_filename)
-        #     X_trainable = numeric_data.drop(columns=self.training_feature)
-        #     y_target = numeric_data[self.training_feature]
-        #     return X_trainable, y_target
-
-        # elif self.feature_type == "categorical":
-        #     categorical_data = config_obj.preprocess_and_save(self.input_filename)
-        #     X_trainable = categorical_data.drop(columns=self.training_feature)
-        #     y_target = categorical_data[self.training_feature]
-        #     return X_trainable, y_target
-        # if self.feature_type in ["numeric", "categorical"]:
-        #     data = config_obj.preprocess_and_save(self.input_filename)
-        #     X_trainable = data.drop(columns=self.training_feature)
-        #     y_target = data[self.training_feature]
-        #     return X_trainable, y_target
-
-        # else:
-        #     raise ValueError(
-        #         f"Unsupported feature type: {self.feature_type}. Choose 'numeric' or 'categorical'."
-        #     )

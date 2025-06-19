@@ -56,8 +56,11 @@ class TabularPreprocessingConfig(BaseModel):
 
     def load_data(self, filename: str) -> pd.DataFrame:
         """Load patient data from a specific Parquet file."""
-        logger.info(f"Loading data from {filename}")
+        logger.info(f"Loading data from {filename} and removing any duplicate rows.")
         patients_data = pd.read_parquet(self.raw_data_dir / filename)
+        patients_data = patients_data.drop_duplicates(
+            subset=["subject_id", "hadm_id", "charttime", "itemid"]
+        )
         patients_data.loc[:, "charttime"] = pd.to_datetime(patients_data["charttime"])
         patients_data.loc[:, "dischtime"] = pd.to_datetime(patients_data["dischtime"])
         return patients_data
@@ -211,7 +214,7 @@ class TabularPreprocessingConfig(BaseModel):
             )
             # log statistics of the numeric data
             logger.info(f"Numeric data shape: {processed_numeric_data.shape}")
-            
+
             # Return the output filenames
             return processed_numeric_data
 
@@ -224,9 +227,7 @@ class TabularPreprocessingConfig(BaseModel):
                 os.path.join(self.preprocessed_data_dir, categorical_output),
                 index=False,
             )
-            logger.info(
-                f"Categorical data shape: {processed_categorical_data.shape}"
-            )
+            logger.info(f"Categorical data shape: {processed_categorical_data.shape}")
             return processed_categorical_data
 
     def process_window_file_only(self):
