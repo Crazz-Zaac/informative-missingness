@@ -209,3 +209,11 @@
    - [best_model.feature_importances_](https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html) -> importance value for each feature
 oversampling (only training set) imblearn
 Class_weight ({0:1, 1:2})
+
+### 2025-06-19
+- [x] Connected to the `ssh csnhr.nhr.fau.de` 
+- [x] Then connected to the `ssh tinyx.nhr.fau.de`
+- [x] Created a `ssh` to be able to git clone and cloned the repo
+- [x] Loaded python using `load module python`
+- [x] Created a virtualenv outside my working directory using `python -m venv .myenv`
+- [x] Installed the necessary packages
