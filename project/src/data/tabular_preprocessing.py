@@ -175,7 +175,7 @@ class TabularPreprocessingConfig(BaseModel):
         ).dt.total_seconds() / 3600  # convert to hours
 
         # aggregating all lab events per admission into a single row with many columns
-        filtering_hours = self.window_size * 24  # convert days to hours
+        filtering_hours = self.window_size * 24  # convert days to hours 7 * 24 = 168 hours
         patients_data = patients_data[
             (patients_data["days_before_discharge"] >= 0)
             & (patients_data["days_before_discharge"] < filtering_hours)
