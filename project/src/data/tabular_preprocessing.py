@@ -170,28 +170,28 @@ class TabularPreprocessingConfig(BaseModel):
             ).astype(int)
 
         # Calculate hours before discharge
-        patients_data.loc[:, "days_before_discharge"] = (
+        patients_data.loc[:, "hours_before_discharge"] = (
             patients_data["dischtime"] - patients_data["charttime"]
         ).dt.total_seconds() / 3600  # convert to hours
 
         # aggregating all lab events per admission into a single row with many columns
         filtering_hours = self.window_size * 24  # convert days to hours 7 * 24 = 168 hours
         patients_data = patients_data[
-            (patients_data["days_before_discharge"] >= 0)
-            & (patients_data["days_before_discharge"] < filtering_hours)
+            (patients_data["hours_before_discharge"] >= 0)
+            & (patients_data["hours_before_discharge"] < filtering_hours)
         ].copy()
 
-        # Assign time bins
-        patients_data.loc[:, "time_bin"] = self.assign_time_bin(
-            patients_data["days_before_discharge"], self.aggregation_window_size
-        )
+        # 12 hours bin for the total of 168 hours
+        patients_data["hour_bin"] = (np.floor(patients_data["hours_before_discharge"]/self.aggregation_window_size)).astype(int)
+        patients_data["hour_bin"] = patients_data["hour_bin"].clip(upper=(filtering_hours // self.aggregation_window_size))  # Cap at 14 bins (0-12, 12-24, ..., 168-180)
+
         # Convert time_bin to string for feature_id
         patients_data.loc[:, "feature_id"] = (
             "itemid_"
             + patients_data["itemid"].astype(str)
             + "_last_"
-            + patients_data["time_bin"].astype(str)
-            + "_hours_prior"
+            + patients_data["hour_bin"].astype(str)
+            + "h"
         )
 
         # Handle targets
