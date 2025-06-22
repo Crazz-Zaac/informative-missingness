@@ -47,7 +47,7 @@ class TabularDataset:
         )
         X = data.drop(columns=[self.training_feature])
         y = data[self.training_feature]
-        groups = data['subject_id']
+        groups = data['hadm_id']
         train_idx, test_idx = next(sgkf.split(X, y, groups=groups))
 
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
@@ -56,6 +56,9 @@ class TabularDataset:
         # Optional imputation
         X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+        
+        X_train.columns = X_train.columns.astype(str)
+        X_test.columns = X_test.columns.astype(str)
 
         logger.info("Imputing data using KNN Imputer")
         imputer = KNNImputer(n_neighbors=5)
