@@ -175,10 +175,7 @@ class TabularPreprocessingConfig(BaseModel):
         #     patients_data["dischtime"] - patients_data["charttime"]
         # ).dt.total_seconds() / 3600  # convert to hours
         
-        patients_data["charttime"] = pd.to_datetime(patients_data["charttime"])
-        patients_data["dischtime"] = pd.to_datetime(patients_data["dischtime"])
         # calculate time delta in minutes, hours, and days
-        
         delta = patients_data["dischtime"] - patients_data["charttime"]
         patients_data["minute"] = (delta.dt.total_seconds() // 60).astype(int)
         patients_data["hour"] = (delta.dt.total_seconds() // 3600).astype(int)
