@@ -217,3 +217,4 @@ Class_weight ({0:1, 1:2})
 - [x] Loaded python using `load module python`
 - [x] Created a virtualenv outside my working directory using `python -m venv .myenv`
 - [x] Installed the necessary packages
+- [x] Copied local dataset to the server `scp -r dataset csnhr.nhr.fau.de:/home/hpc/iwbn/iwbn111h/`
