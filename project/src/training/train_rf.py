@@ -24,41 +24,22 @@ class RandomForestTrainer:
 
     def run_training(self):
         try:
-            # Data loading
-            logger.info("Loading the data...")
-            X, y = self.dataset.load_data()
-            # split data into training and test sets
-            # Using GroupShuffleSplit to ensure that the same group is not in both train and test sets
-            logger.info("Splitting the data into training and test sets...")
-            if X.empty or y.empty:
-                raise ValueError("Loaded data is empty. Please check the dataset.")
-            gss = GroupShuffleSplit(
-                n_splits=1,
-                test_size=self.config.data.test_size,
-                random_state=self.config.random_state,
-            )
-            train_idx, test_idx = next(gss.split(X, y, groups=X["subject_id"]))
-            X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-            y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+            logger.info("Loading and preparing the data...")
+            X_train, X_test, y_train, y_test = self.dataset.load_and_split_data()
 
-            # Training
             logger.info("Training the Random Forest model...")
             if X_train.empty or y_train.empty:
                 raise ValueError("Training data is empty. Please check the dataset.")
             self.model.fit(X_train, y_train)
 
-            # Evaluation
             logger.info("Evaluating the model...")
             y_pred = self.model.predict(X_test)
-            # zero_division=0 to avoid division by zero in classification report
             report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
 
-            # logging model parameters
             logger.info("Logging model parameters...")
             for key, value in self.config.model.hyperparameters.model_dump().items():
                 logger.info(f"Parameter - {key}: {value}")
 
-            # Logging
             logger.info(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
             logger.info(f"F1 Score: {report['weighted avg']['f1-score']:.4f}")
 
@@ -66,6 +47,7 @@ class RandomForestTrainer:
 
         finally:
             logger.info("Experiment completed.")
+
 
     @classmethod
     def from_yaml(cls, config_path: Path):
