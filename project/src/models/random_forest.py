@@ -29,6 +29,4 @@ class RandomForestModel:
     def predict_proba(self, X):
         return self.model.predict_proba(X)
 
-    @property
-    def feature_importances(self):
-        return self.model.feature_importances_
+  

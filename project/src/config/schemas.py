@@ -52,6 +52,7 @@ class TabularDataConfig(BaseModel):
     )
     training_feature: str
     age_threshold: int
+    insurance_type: str
 
     @model_validator(mode="before")
     def validate_training_feature(cls, values):

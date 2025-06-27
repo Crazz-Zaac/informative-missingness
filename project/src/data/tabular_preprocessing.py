@@ -18,6 +18,7 @@ class TabularPreprocessingConfig(BaseModel):
     feature_type: str
     training_feature: str
     age_threshold: int
+    insurance_type: str
 
     @classmethod
     # Create a configuration instance with default paths and specified window size.
@@ -28,6 +29,7 @@ class TabularPreprocessingConfig(BaseModel):
         feature_type: str,
         training_feature: str,
         age_threshold: int,  # Default age threshold for filtering patients
+        insurance_type: str,
     ) -> "TabularPreprocessingConfig":
         """Create a configuration instance with default paths and specified window size."""
         parent_dir = Path(__file__).parent.parent.parent
@@ -39,6 +41,7 @@ class TabularPreprocessingConfig(BaseModel):
             feature_type=feature_type,  # e.g., "numeric" or "categorical"
             training_feature=training_feature,  # e.g., "target"
             age_threshold=age_threshold,  # Default age threshold for filtering patients
+            insurance_type=insurance_type, # 
         )
 
     def assign_time_bin(self, hours_before_discharge, window_hours: int) -> np.ndarray:

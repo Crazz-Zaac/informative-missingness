@@ -18,6 +18,7 @@ class TabularDataset:
         self.aggregation_window_size = self.config.data.tabular.aggregation_window_size
         self.training_feature = self.config.data.tabular.training_feature
         self.age_threshold = self.config.data.tabular.age_threshold
+        self.insurance_type = self.config.data.tabular.insurance_type
         self.random_state = 42
 
     def load_and_split_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
@@ -29,11 +30,12 @@ class TabularDataset:
             aggregation_window_size=self.aggregation_window_size,
             training_feature=self.training_feature,
             age_threshold=self.age_threshold,
+            insurance_type=self.insurance_type,
         )
 
         data = config_obj.preprocess_and_save(self.input_filename)
         data = data.reset_index()
-
+        # dump the data
         if data.empty:
             raise ValueError("Loaded data is empty. Please check the dataset.")
 
@@ -47,13 +49,14 @@ class TabularDataset:
         )
         X = data.drop(columns=[self.training_feature])
         y = data[self.training_feature]
-        groups = data['hadm_id']
+        groups = data['subject_id']
         train_idx, test_idx = next(sgkf.split(X, y, groups=groups))
 
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
-        # Optional imputation
+        
+        
         X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
         

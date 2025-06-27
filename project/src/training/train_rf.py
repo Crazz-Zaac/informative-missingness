@@ -1,4 +1,6 @@
 from sklearn.metrics import classification_report, accuracy_score
+from sklearn.inspection import permutation_importance
+import matplotlib.pyplot as plt
 
 # from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GroupShuffleSplit
@@ -35,6 +37,33 @@ class RandomForestTrainer:
             logger.info("Evaluating the model...")
             y_pred = self.model.predict(X_test)
             report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
+            
+            # Compute permutation importance
+            logger.info("Computing permutation feature importances...")
+            perm_importance = permutation_importance(
+                self.model.model,  # access underlying sklearn model
+                X_test,
+                y_test,
+                n_repeats=10,
+                random_state=42,
+                n_jobs=-1
+            )
+
+            # Convert to pandas Series for easy plotting/logging
+            importances = pd.Series(perm_importance.importances_mean, index=X_test.columns)
+            importances = importances.sort_values(ascending=False)
+
+            # Log top features
+            logger.info("Top 10 Permutation Feature Importances:")
+            for feature, importance in importances.head(10).items():
+                logger.info(f"{feature}: {importance:.4f}")
+
+            # Plot the importances (optional)
+            importances.plot(kind="barh", figsize=(10, 6), title="Permutation Feature Importance")
+            plt.gca().invert_yaxis()
+            plt.tight_layout()
+            plt.show()
+
 
             logger.info("Logging model parameters...")
             for key, value in self.config.model.hyperparameters.model_dump().items():

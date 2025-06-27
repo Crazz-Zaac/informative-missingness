@@ -209,8 +209,9 @@
    - [best_model.feature_importances_](https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html) -> importance value for each feature
 oversampling (only training set) imblearn
 Class_weight ({0:1, 1:2})
+---
 
-### 2025-06-19
+### 2025-06-19: Connecting to HPC 
 - [x] Connected to the `ssh csnhr.nhr.fau.de` 
 - [x] Then connected to the `ssh tinyx.nhr.fau.de`
 - [x] Created a `ssh` to be able to git clone and cloned the repo
@@ -218,3 +219,27 @@ Class_weight ({0:1, 1:2})
 - [x] Created a virtualenv outside my working directory using `python -m venv .myenv`
 - [x] Installed the necessary packages
 - [x] Copied local dataset to the server `scp -r dataset csnhr.nhr.fau.de:/home/hpc/iwbn/iwbn111h/`
+
+### 2025-06-23
+- Attended a meeting
+- MAIN TASKS
+    - [X] side effect
+    - [X] Demographics: age (>/< 65 years), gender, race, insurance (private/non-private) 
+
+- DATA:
+    - V - numerical values (with missing data imputation)
+    - M - binary missingness indicators
+    - D - time since last observed
+
+- MODELS:
+    - Tree-based models: Random Forests, XGBoost
+    - Linear model: Logistic regression
+    - Neural network: MLP
+    - Temporal model: GRU-D, GRU, LSTM  (strats)
+    - Autoencoder (GRU-D based)
+    - Training on: V, VMD, M, MD
+- TODO:
+    - [X] Random oversampling/undersampling - GridSearch (classical model) - class weights {0:1, 1: 5} - imputation - transform (https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
+
+    - Feature importance
+
