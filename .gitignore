@@ -182,3 +182,5 @@ postgres_data/
 logs/
 artifacts/
 temp/
+*.err
+*.out

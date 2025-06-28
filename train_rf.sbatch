@@ -13,8 +13,8 @@ python project/run_train_rf.py
 # Load required modules
 module load python
 
-# Activate your virtual environment if you have one
+# Activate virtual environment 
 source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
 
-# Run your Python script
+# Run Python script
 python project/run_train_rf.py
