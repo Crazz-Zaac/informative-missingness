@@ -61,12 +61,12 @@ class RandomForestTrainer:
 
             # Plot the importances
             parent_dir = Path(__file__).parent.parent.parent
-            plot_dir = parent_dir / "dataset" / "preprocessed_tabular"
+            plot_dir = parent_dir / "plots" 
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             importances.plot(kind="barh", figsize=(10, 6), title="Permutation Feature Importance")
             plt.gca().invert_yaxis()
             plt.tight_layout()
-            plt.savefig(f"../plots/feature_importance{timestamp}")
+            plt.savefig(f"{plot_dir}/feature_importance_{timestamp}.png")
 
             logger.info("Logging model parameters...")
             for key, value in self.config.model.hyperparameters.model_dump().items():
