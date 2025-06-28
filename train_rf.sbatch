@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=rf_train
-#SBATCH --output=rf_train.out
-#SBATCH --error=rf_train.err
+#SBATCH --output=slurm_logs/rf_train_%j.out  # %j adds job ID
+#SBATCH --error=slurm_logs/rf_train_%j.err
 #SBATCH --time=01:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
