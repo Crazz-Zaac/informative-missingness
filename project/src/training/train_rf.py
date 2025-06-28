@@ -1,12 +1,13 @@
 from sklearn.metrics import classification_report, accuracy_score
 from sklearn.inspection import permutation_importance
 import matplotlib.pyplot as plt
-
+import datetime
 # from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GroupShuffleSplit
 from pathlib import Path
 import pandas as pd
 import yaml
+
 from src.config.schemas import ExperimentConfig
 from src.data.dataset import TabularDataset
 from src.models.random_forest import RandomForestModel
@@ -58,12 +59,12 @@ class RandomForestTrainer:
             for feature, importance in importances.head(10).items():
                 logger.info(f"{feature}: {importance:.4f}")
 
-            # Plot the importances (optional)
+            # Plot the importances
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             importances.plot(kind="barh", figsize=(10, 6), title="Permutation Feature Importance")
             plt.gca().invert_yaxis()
             plt.tight_layout()
-            plt.show()
-
+            plt.savefig(f"../plots/feature_importance{timestamp}")
 
             logger.info("Logging model parameters...")
             for key, value in self.config.model.hyperparameters.model_dump().items():
@@ -73,9 +74,12 @@ class RandomForestTrainer:
             logger.info(f"F1 Score: {report['weighted avg']['f1-score']:.4f}")
 
             return self.model
+        
+        except Exception as e:
+            logger.exception("Experiment failed due to an unexpected error.")
 
         finally:
-            logger.info("Experiment completed.")
+            logger.info("Experiment finished.")
 
 
     @classmethod
