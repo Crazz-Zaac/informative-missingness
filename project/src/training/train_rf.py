@@ -60,6 +60,8 @@ class RandomForestTrainer:
                 logger.info(f"{feature}: {importance:.4f}")
 
             # Plot the importances
+            parent_dir = Path(__file__).parent.parent.parent
+            plot_dir = parent_dir / "dataset" / "preprocessed_tabular"
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             importances.plot(kind="barh", figsize=(10, 6), title="Permutation Feature Importance")
             plt.gca().invert_yaxis()
