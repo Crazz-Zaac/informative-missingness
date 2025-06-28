@@ -190,7 +190,7 @@ class TabularPreprocessingConfig(BaseModel):
         # pivot the table on the hour_bin
         ts_df = (
             patients_data
-            .groupby(["hadm_id", "itemid", "target", "hour_bin"])["valuenum"]
+            .groupby(["subject_id", "hadm_id", "itemid", "target", "hour_bin"])["valuenum"]
             .mean()
             .unstack(level=-1)
             .interpolate(method='linear', axis=1)
