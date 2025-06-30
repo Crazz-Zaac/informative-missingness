@@ -183,3 +183,4 @@ logs/
 artifacts/
 temp/
 slurm_logs/
+plots/
