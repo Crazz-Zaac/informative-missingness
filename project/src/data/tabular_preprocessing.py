@@ -150,6 +150,11 @@ class TabularPreprocessingConfig(BaseModel):
         # # calculate hours before discharge
         # patients_data["hour_bin"] = (patients_data["hour"] // self.aggregation_window_size).astype(int)  # floor-divide hour to get 12-hour bins
 
+        if "target" in patients_data.columns:
+            target_column = patients_data[["hadm_id", "target"]].drop_duplicates().set_index("hadm_id")
+        else:
+            target_column = None
+
         patients_data["hours_before_discharge"] = (
             patients_data["dischtime"] - patients_data["charttime"]
         ).dt.total_seconds() / 3600
@@ -188,6 +193,9 @@ class TabularPreprocessingConfig(BaseModel):
         pivoted_patients_data = pivoted_patients_data.interpolate(axis=1, limit_area="inside")
         pivoted_patients_data = pivoted_patients_data.ffill(axis=1).bfill(axis=1)
         
+        # merging target back
+        if target_column is not None:
+            pivoted_patients_data = pivoted_patients_data.join(target_column)
         
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
