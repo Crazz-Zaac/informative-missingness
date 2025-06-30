@@ -11,7 +11,7 @@ data:
     age_threshold: 30 # age threshold for training feature
     insurance_type: private # private or non-private
   temporal:
-    data_path: "../dataset/preprocessed_temporal/"
+    data_path: "../dataset/preprocessed_temporal/" 
 
 model:
   model_type: "RandomForestClassifier"

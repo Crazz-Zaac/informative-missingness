@@ -43,7 +43,7 @@ class TabularDataset:
         y = data[self.training_feature]
         
         sgkf = StratifiedGroupKFold(
-            n_splits=5,
+            n_splits=5, 
             shuffle=True,
             random_state=self.random_state
         )

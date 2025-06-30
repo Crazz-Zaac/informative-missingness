@@ -41,7 +41,7 @@ class TabularPreprocessingConfig(BaseModel):
             feature_type=feature_type,  # e.g., "numeric" or "categorical"
             training_feature=training_feature,  # e.g., "target"
             age_threshold=age_threshold,  # Default age threshold for filtering patients
-            insurance_type=insurance_type, # 
+            insurance_type=insurance_type,  #
         )
 
     def assign_time_bin(self, hours_before_discharge, window_hours: int) -> np.ndarray:
@@ -90,38 +90,6 @@ class TabularPreprocessingConfig(BaseModel):
             return "Unknown or Not Reported"
         else:
             return "Other"
-
-    # def prepare_numeric_data(self, data: pd.DataFrame) -> pd.DataFrame:
-    #     """Prepare numeric data by pivoting and filling missing values."""
-    #     data = data.copy()
-    #     non_imputable_features = ["subject_id", "hadm_id"] + [self.training_feature]
-    #     numeric_data = data.pivot_table(
-    #         index="hadm_id",
-    #         columns="feature_id",
-    #         values="valuenum",
-    #         aggfunc="mean",
-    #     )
-    #     # to preserve subject_id and hadm_id
-    #     hadm_ids = numeric_data.index
-    #     imputable_columns = numeric_data.columns.difference(
-    #         non_imputable_features, sort=False
-    #     )
-    #     imputer = KNNImputer(n_neighbors=5, weights="uniform")
-    #     # Ensure that imputable_columns are numeric
-    #     imputed_values = imputer.fit_transform(numeric_data[imputable_columns].values)
-    #     numeric_data_imputed = pd.DataFrame(
-    #         imputed_values, columns=imputable_columns, index=hadm_ids
-    #     )
-
-    #     static_features = data[non_imputable_features].drop_duplicates()
-    #     static_features = static_features.set_index("hadm_id").loc[
-    #         numeric_data_imputed.index
-    #     ]
-    #     numeric_data = pd.concat(
-    #         [static_features, numeric_data_imputed], axis=1, join="inner"
-    #     ).reset_index()
-
-    #     return numeric_data
 
     def prepare_categorical_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """Prepare categorical data by pivoting and creating binary features."""
@@ -173,47 +141,64 @@ class TabularPreprocessingConfig(BaseModel):
                 patients_data["anchor_age"] >= self.age_threshold
             ).astype(int)
 
-        # Calculate hours before discharge
-        # patients_data.loc[:, "hours_before_discharge"] = (
-        #     patients_data["dischtime"] - patients_data["charttime"]
-        # ).dt.total_seconds() / 3600  # convert to hours
-        
         # calculate time delta in minutes, hours, and days
-        delta = patients_data["dischtime"] - patients_data["charttime"]
-        patients_data["minute"] = (delta.dt.total_seconds() // 60).astype(int)
-        patients_data["hour"] = (delta.dt.total_seconds() // 3600).astype(int)
-        patients_data["day"] = (delta.dt.total_seconds() // (3600 * 24)).astype(int)
-        
-        # calculate hours before discharge
-        patients_data["hour_bin"] = (patients_data["hour"] // self.aggregation_window_size).astype(int)  # floor-divide hour to get 12-hour bins
+        # delta = patients_data["dischtime"] - patients_data["charttime"]
+        # patients_data["minute"] = (delta.dt.total_seconds() // 60).astype(int)
+        # patients_data["hour"] = (delta.dt.total_seconds() // 3600).astype(int)
+        # patients_data["day"] = (delta.dt.total_seconds() // (3600 * 24)).astype(int)
 
-        # pivot the table on the hour_bin
-        ts_df = (
-            patients_data
-            .groupby(["subject_id", "hadm_id", "itemid", "target", "hour_bin"])["valuenum"]
-            .mean()
-            .unstack(level=-1)
-            .interpolate(method='linear', axis=1)
-            .ffill(axis=1)
-            .bfill(axis=1)
+        # # calculate hours before discharge
+        # patients_data["hour_bin"] = (patients_data["hour"] // self.aggregation_window_size).astype(int)  # floor-divide hour to get 12-hour bins
+
+        patients_data["hours_before_discharge"] = (
+            patients_data["dischtime"] - patients_data["charttime"]
+        ).dt.total_seconds() / 3600
+        patients_data["bin"] = (
+            patients_data["hours_before_discharge"] // self.aggregation_window_size
+        )
+        patients_data = patients_data[patients_data["bin"].notna()]
+        patients_data.loc[:, "bin"] = patients_data["bin"].astype(int)
+        patients_data = patients_data[patients_data["bin"] >= 0]
+
+        patients_data["itemid_bin"] = (
+            patients_data["itemid"].astype(int).astype(str)
+            + "_"
+            + patients_data["bin"].astype(str)
+        )
+        
+        pivoted_patients_data = patients_data.pivot_table(
+            index="hadm_id",
+            columns="itemid_bin",
+            values="valuenum",
+            aggfunc="mean"
         )
 
-        # Handle targets
-        # targets = (
-        #     ts_df[["subject_id", "hadm_id"] + [self.training_feature]]
-        #     .drop_duplicates()
-        #     .set_index("hadm_id")
+        # pivot the table on the hour_bin
+        # ts_df = (
+        #     patients_data.groupby(
+        #         ["subject_id", "hadm_id", "itemid", "target", "hour_bin"]
+        #     )["valuenum"]
+        #     .mean()
+        #     .unstack(level=-1)
+        #     .interpolate(method="linear", axis=1)
+        #     .ffill(axis=1)
+        #     .bfill(axis=1)
         # )
+        
+        pivoted_patients_data = pivoted_patients_data.interpolate(axis=1, limit_area="inside")
+        pivoted_patients_data = pivoted_patients_data.ffill(axis=1).bfill(axis=1)
+        
+        
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
         numeric_output = f"{base_name}_numeric.parquet"
-        ts_df.to_parquet(
-                os.path.join(self.preprocessed_data_dir, numeric_output), index=False
-            )
-        logger.info(f"Numeric data shape: {ts_df.shape}")
+        pivoted_patients_data.to_parquet(
+            os.path.join(self.preprocessed_data_dir, numeric_output), index=False
+        )
+        logger.info(f"Numeric data shape: {pivoted_patients_data.shape}")
 
         # Return the output filenames
-        return ts_df
+        return pivoted_patients_data
 
         # if self.feature_type == "numeric":
         #     logger.info("Processing numeric data")
