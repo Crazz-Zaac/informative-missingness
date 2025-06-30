@@ -49,7 +49,7 @@ class TabularDataset:
         )
         X = data.drop(columns=[self.training_feature])
         y = data[self.training_feature]
-        groups = data['subject_id']
+        groups = data['hadm_id'] # data['subject_id']
         train_idx, test_idx = next(sgkf.split(X, y, groups=groups))
 
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
