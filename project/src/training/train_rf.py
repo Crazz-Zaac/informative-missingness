@@ -1,9 +1,15 @@
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import (
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    classification_report,
+    accuracy_score,
+)
 from sklearn.inspection import permutation_importance
+from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
 import datetime
-# from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GroupShuffleSplit
 from pathlib import Path
 import pandas as pd
 import yaml
@@ -24,65 +30,125 @@ class RandomForestTrainer:
             window_size=self.config.data.tabular.window_size, config=self.config
         )
         self.model = RandomForestModel(config=config.model)
+        self.random_state = 42  # config.model.hyperparameters.random_state
+
+    def save_and_plot(
+        self, mean_importance: pd.DataFrame, recalls: list, f1s: list, aucs: list
+    ):
+        parent_dir = Path(__file__).parent.parent.parent
+        plot_dir = parent_dir / "plots"
+        plot_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        mean_importance.plot(
+            kind="barh", figsize=(10, 6), title="Permutation Feature Importance"
+        )
+        plt.gca().invert_yaxis()
+        plt.tight_layout()
+        plt.savefig(f"{plot_dir}/feature_importance_{timestamp}.png")
+
+        metrics_df = pd.DataFrame(
+            {"fold": list(range(1, 6)), "recall": recalls, "f1": f1s, "roc_auc": aucs}
+        )
+        metrics_df.to_csv(f"{plot_dir}/fold_metrics_{timestamp}.csv", index=False)
 
     def run_training(self):
+        recalls, f1s, aucs = [], [], []
+        all_importances = []
+        logger.info("Loading and preparing the data...")
+        X, y = self.dataset.load_and_split_data()
+        groups = X["subject_id"]
+        sgkf = StratifiedGroupKFold(
+            n_splits=5, shuffle=True, random_state=self.random_state
+        )
+        splits = sgkf.split(X, y, groups=groups)
         try:
-            logger.info("Loading and preparing the data...")
-            X_train, X_test, y_train, y_test = self.dataset.load_and_split_data()
+            for fold, (train_idx, test_idx) in enumerate(splits):
+                logger.info(f"Running fold {fold+1}...")
 
-            logger.info("Training the Random Forest model...")
-            if X_train.empty or y_train.empty:
-                raise ValueError("Training data is empty. Please check the dataset.")
-            self.model.fit(X_train, y_train)
+                X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
+                y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+                # checking column types
+                X_train.columns = X_train.columns.astype(str)
+                X_test.columns = X_test.columns.astype(str)
 
-            logger.info("Evaluating the model...")
-            y_pred = self.model.predict(X_test)
-            report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
-            
+                logger.info("Imputing data using KNN Imputer")
+                imputer = KNNImputer(n_neighbors=5)
+                X_train_imputed = pd.DataFrame(
+                    imputer.fit_transform(X_train), columns=X_train.columns
+                )
+                X_test_imputed = pd.DataFrame(
+                    imputer.transform(X_test), columns=X_test.columns
+                )
+
+                logger.info("Training the Random Forest model...")
+                model = RandomForestModel(config=self.config.model)
+                if X_train.empty or y_train.empty:
+                    raise ValueError(
+                        "Training data is empty. Please check the dataset."
+                    )
+                model.fit(X_train_imputed, y_train)
+
+                logger.info("Evaluating the model...")
+                y_pred = model.predict(X_test_imputed)
+                y_prob = model.predict_proba(X_test_imputed)[:, 1]
+                # report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
+
+                recalls.append(recall_score(y_test, y_pred, pos_label=1))
+                f1s.append(f1_score(y_test, y_pred, pos_label=1))
+                aucs.append(roc_auc_score(y_test, y_prob))
+
+                result = permutation_importance(
+                    self.model.model,  # access underlying sklearn model
+                    X_test,
+                    y_test,
+                    n_repeats=10,
+                    random_state=42,
+                    n_jobs=-1,
+                )
+                all_importances.append(
+                    pd.Series(result.importances_mean, index=X_test.columns)
+                )
+
             # Compute permutation importance
             logger.info("Computing permutation feature importances...")
-            perm_importance = permutation_importance(
-                self.model.model,  # access underlying sklearn model
-                X_test,
-                y_test,
-                n_repeats=10,
-                random_state=42,
-                n_jobs=-1
+            mean_importance = (
+                pd.concat(all_importances, axis=1)
+                .mean(axis=1)
+                .sort_values(ascending=False)
             )
 
-            # Convert to pandas Series for easy plotting/logging
-            importances = pd.Series(perm_importance.importances_mean, index=X_test.columns)
-            importances = importances.sort_values(ascending=False)
+            logger.info("Saving and plotting the important features")
+            self.save_and_plot(
+                mean_importance=mean_importance, recalls=recalls, f1s=f1s, aucs=aucs
+            )
 
             # Log top features
             logger.info("Top 10 Permutation Feature Importances:")
-            for feature, importance in importances.head(10).items():
+            for feature, importance in mean_importance.head(10).items():
                 logger.info(f"{feature}: {importance:.4f}")
-
-            # Plot the importances
-            parent_dir = Path(__file__).parent.parent.parent
-            plot_dir = parent_dir / "plots" 
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            importances.plot(kind="barh", figsize=(10, 6), title="Permutation Feature Importance")
-            plt.gca().invert_yaxis()
-            plt.tight_layout()
-            plt.savefig(f"{plot_dir}/feature_importance_{timestamp}.png")
 
             logger.info("Logging model parameters...")
             for key, value in self.config.model.hyperparameters.model_dump().items():
                 logger.info(f"Parameter - {key}: {value}")
 
-            logger.info(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
-            logger.info(f"F1 Score: {report['weighted avg']['f1-score']:.4f}")
+            logger.info(
+                f"Mean Recall (class=1): {pd.Series(recalls).mean():.4f} ± {pd.Series(recalls).std():.4f}"
+            )
+            logger.info(
+                f"Mean F1 (class=1): {pd.Series(f1s).mean():.4f} ± {pd.Series(f1s).std():.4f}"
+            )
+            logger.info(
+                f"Mean ROC-AUC: {pd.Series(aucs).mean():.4f} ± {pd.Series(aucs).std():.4f}"
+            )
 
             return self.model
-        
+
         except Exception as e:
             logger.exception("Experiment failed due to an unexpected error.")
 
         finally:
-            logger.info("Experiment finished.")
-
+            logger.success("Experiment finished.")
 
     @classmethod
     def from_yaml(cls, config_path: Path):

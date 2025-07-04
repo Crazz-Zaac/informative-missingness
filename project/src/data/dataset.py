@@ -1,12 +1,9 @@
 import pandas as pd
 from typing import Tuple
-from sklearn.model_selection import StratifiedGroupKFold
-from sklearn.impute import KNNImputer
 from loguru import logger
 
 from .tabular_preprocessing import TabularPreprocessingConfig
 from src.config.schemas import ExperimentConfig
-
 
 
 class TabularDataset:
@@ -19,10 +16,14 @@ class TabularDataset:
         self.training_feature = self.config.data.tabular.training_feature
         self.age_threshold = self.config.data.tabular.age_threshold
         self.insurance_type = self.config.data.tabular.insurance_type
-        self.random_state = 42
+        
 
-    def load_and_split_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        logger.info(f"Preprocessing data from {self.input_filename} with window size {self.window_size} days.")
+    def load_and_split_data(
+        self,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:  # pd.Series, pd.Series
+        logger.info(
+            f"Preprocessing data from {self.input_filename} with window size {self.window_size} days."
+        )
 
         config_obj = TabularPreprocessingConfig.from_defaults(
             window_size=self.window_size,
@@ -41,32 +42,27 @@ class TabularDataset:
 
         X = data.drop(columns=[self.training_feature])
         y = data[self.training_feature]
-        
-        sgkf = StratifiedGroupKFold(
-            n_splits=5, 
-            shuffle=True,
-            random_state=self.random_state
-        )
-        X = data.drop(columns=[self.training_feature])
+
+        # removing hadm_id
+        X = data.drop(columns=[self.training_feature, "hadm_id"])
+        X.index = data["hadm_id"]
         y = data[self.training_feature]
-        groups = data['hadm_id'] # data['subject_id']
-        train_idx, test_idx = next(sgkf.split(X, y, groups=groups))
-
-        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-
         
-        
-        X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
-        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-        
-        X_train.columns = X_train.columns.astype(str)
-        X_test.columns = X_test.columns.astype(str)
+        return X, y
+        # groups = data["subject_id"]  # data['hadm_id']
+        # train_idx, test_idx = next(sgkf.split(X, y, groups=groups))
 
-        logger.info("Imputing data using KNN Imputer")
-        imputer = KNNImputer(n_neighbors=5)
-        X_train_imputed = pd.DataFrame(imputer.fit_transform(X_train), columns=X_train.columns)
-        X_test_imputed = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns)
+        # X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
+        # y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
-        return X_train_imputed, X_test_imputed, y_train, y_test
+        # X_train.columns = X_train.columns.astype(str)
+        # X_test.columns = X_test.columns.astype(str)
 
+        # logger.info("Imputing data using KNN Imputer")
+        # imputer = KNNImputer(n_neighbors=5)
+        # X_train_imputed = pd.DataFrame(
+        #     imputer.fit_transform(X_train), columns=X_train.columns
+        # )
+        # X_test_imputed = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns)
+
+        # return X_train_imputed, X_test_imputed, y_train, y_test

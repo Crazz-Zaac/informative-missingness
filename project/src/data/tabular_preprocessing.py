@@ -141,15 +141,6 @@ class TabularPreprocessingConfig(BaseModel):
                 patients_data["anchor_age"] >= self.age_threshold
             ).astype(int)
 
-        # calculate time delta in minutes, hours, and days
-        # delta = patients_data["dischtime"] - patients_data["charttime"]
-        # patients_data["minute"] = (delta.dt.total_seconds() // 60).astype(int)
-        # patients_data["hour"] = (delta.dt.total_seconds() // 3600).astype(int)
-        # patients_data["day"] = (delta.dt.total_seconds() // (3600 * 24)).astype(int)
-
-        # # calculate hours before discharge
-        # patients_data["hour_bin"] = (patients_data["hour"] // self.aggregation_window_size).astype(int)  # floor-divide hour to get 12-hour bins
-
         if "target" in patients_data.columns:
             target_column = (
                 patients_data[["hadm_id", "target"]]
@@ -175,49 +166,39 @@ class TabularPreprocessingConfig(BaseModel):
             + patients_data["bin"].astype(str)
         )
 
-        pivoted_patients_data = patients_data.pivot_table(
-            index=["hadm_id", "itemid"],
-            columns="itemid_bin",
-            values="valuenum",
-            # aggfunc="mean",
-        )
-
-        # pivot the table on the hour_bin
-        # ts_df = (
-        #     patients_data.groupby(
-        #         ["subject_id", "hadm_id", "itemid", "target", "hour_bin"]
-        #     )["valuenum"]
-        #     .mean()
-        #     .unstack(level=-1)
-        #     .interpolate(method="linear", axis=1)
-        #     .ffill(axis=1)
-        #     .bfill(axis=1)
-        # )
-        
-        
-
-        pivoted_patients_data = (
-            pivoted_patients_data.interpolate(axis=1, limit_area="inside")
+        patients_data = (
+            patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+            .mean()
+            .unstack(level=-1)
+            .interpolate(method="linear", axis=1, limit_area="inside")
             .ffill(axis=1)
             .bfill(axis=1)
+            .reset_index()
         )
         
-        
+        patients_data = patients_data.set_index(["hadm_id", "itemid"])
+        wide_df = patients_data.unstack(level=-1)
+        # Only swap levels if columns is a MultiIndex
+        if isinstance(wide_df.columns, pd.MultiIndex):
+            wide_df.columns = wide_df.columns.swaplevel(0, 1)
+        wide_df = wide_df.sort_index(axis=1)
+        wide_df.columns = ['_'.join(map(str, col)) if isinstance(col, tuple) else str(col) for col in wide_df.columns]
+              
 
         # merging target back
         if target_column is not None:
-            pivoted_patients_data = pivoted_patients_data.join(target_column)
+            patients_data = wide_df.join(target_column)
 
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
         numeric_output = f"{base_name}_numeric.parquet"
-        pivoted_patients_data.to_parquet(
+        patients_data.to_parquet(
             os.path.join(self.preprocessed_data_dir, numeric_output), index=False
         )
-        logger.info(f"Numeric data shape: {pivoted_patients_data.shape}")
+        logger.info(f"Numeric data shape: {patients_data.shape}")
 
         # Return the output filenames
-        return pivoted_patients_data
+        return patients_data
 
         # if self.feature_type == "numeric":
         #     logger.info("Processing numeric data")
