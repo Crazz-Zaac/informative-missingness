@@ -151,7 +151,11 @@ class TabularPreprocessingConfig(BaseModel):
         # patients_data["hour_bin"] = (patients_data["hour"] // self.aggregation_window_size).astype(int)  # floor-divide hour to get 12-hour bins
 
         if "target" in patients_data.columns:
-            target_column = patients_data[["hadm_id", "target"]].drop_duplicates().set_index("hadm_id")
+            target_column = (
+                patients_data[["hadm_id", "target"]]
+                .drop_duplicates()
+                .set_index("hadm_id")
+            )
         else:
             target_column = None
 
@@ -170,12 +174,12 @@ class TabularPreprocessingConfig(BaseModel):
             + "_"
             + patients_data["bin"].astype(str)
         )
-        
+
         pivoted_patients_data = patients_data.pivot_table(
-            index="hadm_id",
+            index=["hadm_id", "itemid"],
             columns="itemid_bin",
             values="valuenum",
-            aggfunc="mean"
+            # aggfunc="mean",
         )
 
         # pivot the table on the hour_bin
@@ -190,13 +194,20 @@ class TabularPreprocessingConfig(BaseModel):
         #     .bfill(axis=1)
         # )
         
-        pivoted_patients_data = pivoted_patients_data.interpolate(axis=1, limit_area="inside")
-        pivoted_patients_data = pivoted_patients_data.ffill(axis=1).bfill(axis=1)
         
+
+        pivoted_patients_data = (
+            pivoted_patients_data.interpolate(axis=1, limit_area="inside")
+            .ffill(axis=1)
+            .bfill(axis=1)
+        )
+        
+        
+
         # merging target back
         if target_column is not None:
             pivoted_patients_data = pivoted_patients_data.join(target_column)
-        
+
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
         numeric_output = f"{base_name}_numeric.parquet"
