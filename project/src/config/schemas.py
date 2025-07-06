@@ -4,13 +4,13 @@ from pathlib import Path
 from datetime import datetime
 from pathlib import Path
 from enum import Enum
-from typing import Optional, List, Union, Literal
+from typing import Optional, List, Dict, Literal, Union, Any
 
 
 class ModelTypeEnum(str, Enum):
-    RF = "RandomForestClassifier"
+    RF = "RandomForest"
     GRU = "GRU"
-    GRUD = "GRU-D"
+    GRUD = "GRU_D"
 
 
 class MetricsEnum(str, Enum):
@@ -28,25 +28,49 @@ class LoggingLevelEnum(str, Enum):
     CRITICAL = "critical"
 
 
-class RandomForestHyperParams(BaseModel):
+class RandomForestGridSearchParams(BaseModel):
+    n_estimators: List[int]
+    max_depth: List[int]
+    min_samples_split: List[int]
+    class_weight: Optional[List[Union[None, dict[int, float]]]]
+
+
+class RandomForestFixedParams(BaseModel):
     n_estimators: int
     max_depth: int
     random_state: int
-    class_weight: str
     min_samples_split: int
-    min_samples_leaf: int
+    class_weight: Union[str, dict[int, float]]
+    min_samples_leaf: Optional[int] = 1  # default if not specified
 
 
-class GRUHyperParams(BaseModel):
-    hidden_size: int
-    num_layers: int
-    dropout: float
+class RandomForestHyperParams(BaseModel):
+    fixed_params: RandomForestFixedParams
+    grid_search_params: Optional[RandomForestGridSearchParams] = None
 
 
+# Model configurations for different models
+class HyperParams(BaseModel):
+    fixed_params: Dict[str, Any]
+    grid_search_params: Dict[str, Any]
+
+class ModelHyperParams(BaseModel):
+    RandomForest: Optional[HyperParams] = None
+    LogisticRegression: Optional[HyperParams] = None
+    # more models to be added here later
+
+# A dictionary to map model types to their hyperparameters
+class ModelConfig(BaseModel):
+    model_type: ModelTypeEnum
+    hyperparameters: ModelHyperParams
+
+
+
+# Tabular data configuration for the experiment
 class TabularDataConfig(BaseModel):
     data_path: str
     window_size: int
-    feature_type: Literal["numeric", "categorical"] 
+    feature_type: Literal["numeric", "categorical"]
     aggregation_window_size: int = Field(
         2, gt=0, lt=25, description="Size of the aggregation window in days"
     )
@@ -81,14 +105,9 @@ class TemporalDataConfig(BaseModel):
 
 
 class DataConfig(BaseModel):
-    test_size: float 
+    test_size: float
     tabular: TabularDataConfig
     temporal: TemporalDataConfig
-
-
-class ModelConfig(BaseModel):
-    model_type: ModelTypeEnum
-    hyperparameters: Union[RandomForestHyperParams, GRUHyperParams, dict]
 
 
 class TrainingConfig(BaseModel):
@@ -114,7 +133,15 @@ class EvaluationConfig(BaseModel):
 
 class ExperimentConfig(BaseModel):
     # should match with the one in the config.yml file
-    expirement_name: str = Field(
+    dataset_dir: Path = Path(__file__).resolve().parents[2] / "dataset"
+    preprocessed_tabular_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "processed_tabular"
+    preprocessed_temporal_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "processed_temporal"
+    raw_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "raw"
+    temporary_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "temp"
+    logging_dir: Path = Path(__file__).resolve().parents[2] / "logs"
+    plots_dir: Path = Path(__file__).resolve().parents[2] / "plots"
+    
+    experiment_name: str = Field(
         "default_experiment", description="Name of the experiment"
     )
     experiment_dir: Path = Field(
@@ -127,7 +154,6 @@ class ExperimentConfig(BaseModel):
     )
     data: DataConfig
     model: ModelConfig
-    random_state: int = 42
     training: TrainingConfig
     logging: LoggingConfig
     evaluation: EvaluationConfig
@@ -137,7 +163,14 @@ class ExperimentConfig(BaseModel):
 
     def create_dirs(self):
         """Create directories for the experiment."""
-        self.experiment_dir.mkdir(parents=True, exist_ok=True)
+        self.preprocessed_temporal_data_dir.mkdir(parents=True, exist_ok=True)
+        self.preprocessed_tabular_data_dir.mkdir(parents=True, exist_ok=True)
+        self.raw_data_dir.mkdir(parents=True, exist_ok=True)
+        self.temporary_data_dir.mkdir(parents=True, exist_ok=True)
+        self.logging_dir.mkdir(parents=True, exist_ok=True)
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.experiment_dir.mkdir(parents=True, exist_ok=True)  
         (self.experiment_dir / "logs").mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "models").mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "results").mkdir(parents=True, exist_ok=True)

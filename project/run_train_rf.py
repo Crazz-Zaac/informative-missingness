@@ -4,7 +4,7 @@ from src.config.schemas import ExperimentConfig
 from src.utils.logging_utils import setup_logging
 import yaml
 
-PROJECT_ROOT = Path(__file__).resolve().parent  # Adjust based on your structure
+PROJECT_ROOT = Path(__file__).resolve().parent  # project root directory
 CONFIG_PATH = PROJECT_ROOT / "configs" / "config.yml"
 if __name__ == "__main__":
     with open(CONFIG_PATH, "r") as file:
