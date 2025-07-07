@@ -184,3 +184,6 @@ artifacts/
 temp/
 slurm_logs/
 plots/
+
+.vscode/
+.vscode-test/
