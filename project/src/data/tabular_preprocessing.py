@@ -142,13 +142,11 @@ class TabularPreprocessingConfig(BaseModel):
             ).astype(int)
 
         if "target" in patients_data.columns:
-            target_column = (
-                patients_data[["hadm_id", "target"]]
-                .drop_duplicates()
-                .set_index("hadm_id")
-            )
+            cohort_data = patients_data[
+                ["hadm_id", "subject_id", "target"]
+            ].drop_duplicates()
         else:
-            target_column = None
+            raise ValueError("Missing target column in data; cannot proceed.")
 
         patients_data["hours_before_discharge"] = (
             patients_data["dischtime"] - patients_data["charttime"]
@@ -175,19 +173,28 @@ class TabularPreprocessingConfig(BaseModel):
             .bfill(axis=1)
             .reset_index()
         )
-        
+
         patients_data = patients_data.set_index(["hadm_id", "itemid"])
         wide_df = patients_data.unstack(level=-1)
         # Only swap levels if columns is a MultiIndex
         if isinstance(wide_df.columns, pd.MultiIndex):
             wide_df.columns = wide_df.columns.swaplevel(0, 1)
         wide_df = wide_df.sort_index(axis=1)
-        wide_df.columns = ['_'.join(map(str, col)) if isinstance(col, tuple) else str(col) for col in wide_df.columns]
-              
+        wide_df.columns = [
+            "_".join(map(str, col)) if isinstance(col, tuple) else str(col)
+            for col in wide_df.columns
+        ]
+        patients_data = wide_df.copy()
+        
+        target_data = cohort_data.set_index("hadm_id")["target"].reindex(
+            patients_data.index
+        )
 
-        # merging target back
-        if target_column is not None:
-            patients_data = wide_df.join(target_column)
+        groups = (
+            cohort_data.set_index("hadm_id")
+            .reindex(patients_data.index)["subject_id"]
+            .values
+        )
 
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
@@ -198,7 +205,7 @@ class TabularPreprocessingConfig(BaseModel):
         logger.info(f"Numeric data shape: {patients_data.shape}")
 
         # Return the output filenames
-        return patients_data
+        return patients_data, target_data, groups
 
         # if self.feature_type == "numeric":
         #     logger.info("Processing numeric data")

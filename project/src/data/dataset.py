@@ -20,7 +20,7 @@ class TabularDataset:
 
     def load_and_split_data(
         self,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:  # pd.Series, pd.Series
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series]:  # pd.Series, pd.Series
         logger.info(
             f"Preprocessing data from {self.input_filename} with window size {self.window_size} days."
         )
@@ -34,35 +34,7 @@ class TabularDataset:
             insurance_type=self.insurance_type,
         )
 
-        data = config_obj.preprocess_and_save(self.input_filename)
-        data = data.reset_index()
-        # dump the data
-        if data.empty:
-            raise ValueError("Loaded data is empty. Please check the dataset.")
-
-        X = data.drop(columns=[self.training_feature])
-        y = data[self.training_feature]
-
-        # removing hadm_id
-        X = data.drop(columns=[self.training_feature, "hadm_id"])
-        X.index = data["hadm_id"]
-        y = data[self.training_feature]
+        X, y, groups = config_obj.preprocess_and_save(self.input_filename)
         
-        return X, y
-        # groups = data["subject_id"]  # data['hadm_id']
-        # train_idx, test_idx = next(sgkf.split(X, y, groups=groups))
+        return X, y, groups
 
-        # X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
-        # y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-
-        # X_train.columns = X_train.columns.astype(str)
-        # X_test.columns = X_test.columns.astype(str)
-
-        # logger.info("Imputing data using KNN Imputer")
-        # imputer = KNNImputer(n_neighbors=5)
-        # X_train_imputed = pd.DataFrame(
-        #     imputer.fit_transform(X_train), columns=X_train.columns
-        # )
-        # X_test_imputed = pd.DataFrame(imputer.transform(X_test), columns=X_test.columns)
-
-        # return X_train_imputed, X_test_imputed, y_train, y_test

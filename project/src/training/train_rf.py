@@ -2,6 +2,7 @@ from sklearn.metrics import recall_score, f1_score, roc_auc_score
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import StratifiedGroupKFold, GridSearchCV
 from sklearn.impute import KNNImputer
+from imblearn.over_sampling import RandomOverSampler
 import matplotlib.pyplot as plt
 import datetime
 from pathlib import Path
@@ -63,8 +64,8 @@ class RandomForestTrainer:
         best_estimators = []
 
         logger.info("Loading and preparing the data...")
-        X, y = self.dataset.load_and_split_data()
-        groups = X["subject_id"]
+        X, y, groups = self.dataset.load_and_split_data()
+        # groups = X["subject_id"]
 
         sgkf = StratifiedGroupKFold(
             n_splits=5, shuffle=True, random_state=self.random_state
@@ -78,19 +79,28 @@ class RandomForestTrainer:
 
                 X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
                 y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+                
+                # sampling data
+                logger.info("Balancing the training set using RandomOverSampler")
+                oversample = RandomOverSampler(sampling_strategy='minority', random_state=self.random_state)
+                X_train, y_train = oversample.fit_resample(X_train, y_train)
 
                 # Ensure consistent column names
                 X_train.columns = X_train.columns.astype(str)
                 X_test.columns = X_test.columns.astype(str)
 
                 # Imputation
-                logger.info("Imputing missing values with KNNImputer...")
+                logger.info("Imputing missing values with KNNImputer")
                 imputer = KNNImputer(n_neighbors=5)
                 X_train_imputed = pd.DataFrame(
-                    imputer.fit_transform(X_train), columns=X_train.columns
+                    imputer.fit_transform(X_train), 
+                    index=X_train.index,
+                    columns=X_train.columns
                 )
                 X_test_imputed = pd.DataFrame(
-                    imputer.transform(X_test), columns=X_test.columns
+                    imputer.transform(X_test),
+                    index=X_test.index,
+                    columns=X_test.columns
                 )
 
                 # Grid Search with fixed and search parameters
