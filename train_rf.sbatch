@@ -8,11 +8,10 @@
 #SBATCH --partition=a100  # Or rtx3080/v100/h100
 
 module load python
-python project/run_train_rf.py
-
 
 # Activate virtual environment 
 source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
+
 
 # Run Python script
 python project/run_train_rf.py
