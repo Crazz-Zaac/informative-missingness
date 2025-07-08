@@ -7,11 +7,9 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=a100  # Or rtx3080/v100/h100
 
-module load python/3.8
+module load python
 python project/run_train_rf.py
 
-# Load required modules
-module load python
 
 # Activate virtual environment 
 source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
