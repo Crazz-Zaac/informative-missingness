@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 import pandas as pd
+from pandas import DataFrame, MultiIndex
 import numpy as np
 import os
 import re
@@ -164,48 +165,88 @@ class TabularPreprocessingConfig(BaseModel):
             + patients_data["bin"].astype(str)
         )
 
-        patients_data = (
-            patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+        # patients_data = (
+        #     patients_data
+        #     .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+        #     .mean()
+        #     .unstack(level=-1)
+        #     .interpolate(method='linear', axis=1, limit_area="inside")  # interpolate only between observed values
+        #     .ffill(axis=1)  # fill missing values forward (after last measurement)
+        #     .bfill(axis=1)  # fill missing values backward (before first measurement)
+        #     .reset_index()
+        # )
+
+        # # Set multi-index and unstack to wide format
+        # patients_data = (
+        #     patients_data
+        #     .set_index(["hadm_id", "itemid"])
+        #     .unstack(level=-1)
+        # )
+
+        # # Reorganize columns if MultiIndex exists
+        # if isinstance(patients_data.columns, pd.MultiIndex):
+        #     patients_data.columns = (
+        #         patients_data.columns
+        #         .swaplevel(0, 1)
+        #         .sortlevel(0)  # equivalent to sort_index but works with MultiIndex
+        #     )
+
+        # # Flatten column names
+        # patients_data.columns = [
+        #     '_'.join(map(str, col)) if isinstance(col, tuple) else str(col)
+        #     for col in patients_data.columns
+        # ]
+        df_ts = (
+            patients_data
+            .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .mean()
-            .unstack(level=-1)
-            .interpolate(method="linear", axis=1, limit_area="inside")
-            .ffill(axis=1)
-            .bfill(axis=1)
+            .unstack(level=-1)  # unstack 'bin' to columns
+            .interpolate(method="linear", axis=1, limit_area="inside")  # interpolate between observed values
+            .ffill(axis=1)  # forward fill missing after last measurement
+            .bfill(axis=1)  # backward fill missing before first measurement
             .reset_index()
         )
 
-        patients_data = patients_data.set_index(["hadm_id", "itemid"])
-        wide_df = patients_data.unstack(level=-1)
-        # Only swap levels if columns is a MultiIndex
-        if isinstance(wide_df.columns, pd.MultiIndex):
-            wide_df.columns = wide_df.columns.swaplevel(0, 1)
-        wide_df = wide_df.sort_index(axis=1)
-        wide_df.columns = [
+        # Set index on hadm_id and itemid
+        df_ts = df_ts.set_index(["hadm_id", "itemid"])
+
+        # Unstack 'itemid' to get one row per admission with multiple lab*time columns
+        df_mx = df_ts.unstack(level=-1)
+
+        # Swap levels of MultiIndex columns so that time bins are outer level and itemid inner level
+        if isinstance(df_mx.columns, pd.MultiIndex):
+            df_mx.columns = df_mx.columns.swaplevel(0, 1)
+
+        # Sort columns lexically
+        df_mx = df_mx.sort_index(axis=1)
+
+        # Flatten MultiIndex columns to strings like 'bin_itemid'
+        df_mx.columns = [
             "_".join(map(str, col)) if isinstance(col, tuple) else str(col)
-            for col in wide_df.columns
+            for col in df_mx.columns
         ]
-        patients_data = wide_df.copy()
         
+               
         target_data = cohort_data.set_index("hadm_id")["target"].reindex(
-            patients_data.index
+            df_mx.index
         )
 
         groups = (
             cohort_data.set_index("hadm_id")
-            .reindex(patients_data.index)["subject_id"]
+            .reindex(df_mx.index)["subject_id"]
             .values
         )
 
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
         numeric_output = f"{base_name}_numeric.parquet"
-        patients_data.to_parquet(
+        df_mx.to_parquet(
             os.path.join(self.preprocessed_data_dir, numeric_output), index=False
         )
-        logger.info(f"Numeric data shape: {patients_data.shape}")
+        logger.info(f"Numeric data shape: {df_mx.shape}")
 
         # Return the output filenames
-        return patients_data, target_data, groups
+        return df_mx, target_data, groups
 
         # if self.feature_type == "numeric":
         #     logger.info("Processing numeric data")

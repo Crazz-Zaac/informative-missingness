@@ -1,7 +1,7 @@
 from sklearn.metrics import recall_score, f1_score, roc_auc_score
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import StratifiedGroupKFold, GridSearchCV
-from sklearn.impute import KNNImputer
+from sklearn.impute import SimpleImputer
 from imblearn.over_sampling import RandomOverSampler
 import matplotlib.pyplot as plt
 import datetime
@@ -65,8 +65,7 @@ class RandomForestTrainer:
 
         logger.info("Loading and preparing the data...")
         X, y, groups = self.dataset.load_and_split_data()
-        # groups = X["subject_id"]
-
+        
         sgkf = StratifiedGroupKFold(
             n_splits=5, shuffle=True, random_state=self.random_state
         )
@@ -89,20 +88,6 @@ class RandomForestTrainer:
                 X_train.columns = X_train.columns.astype(str)
                 X_test.columns = X_test.columns.astype(str)
 
-                # Imputation
-                logger.info("Imputing missing values with KNNImputer")
-                imputer = KNNImputer(n_neighbors=5)
-                X_train_imputed = pd.DataFrame(
-                    imputer.fit_transform(X_train), 
-                    index=X_train.index,
-                    columns=X_train.columns
-                )
-                X_test_imputed = pd.DataFrame(
-                    imputer.transform(X_test),
-                    index=X_test.index,
-                    columns=X_test.columns
-                )
-
                 # Grid Search with fixed and search parameters
                 base_model = self.model._initialize_model()
                 logger.info("Running GridSearchCV...")
@@ -114,7 +99,7 @@ class RandomForestTrainer:
                     n_jobs=-1,
                     verbose=1,
                 )
-                grid_search.fit(X_train_imputed, y_train)
+                grid_search.fit(X_train, y_train)
 
                 best_model = grid_search.best_estimator_
                 best_estimators.append(best_model)
@@ -124,8 +109,8 @@ class RandomForestTrainer:
                 )
 
                 # Evaluation
-                y_pred = best_model.predict(X_test_imputed)
-                y_prob = best_model.predict_proba(X_test_imputed)[:, 1]
+                y_pred = best_model.predict(X_test)
+                y_prob = best_model.predict_proba(X_test)[:, 1]
 
                 recalls.append(recall_score(y_test, y_pred, pos_label=1))
                 f1s.append(f1_score(y_test, y_pred, pos_label=1))
@@ -139,7 +124,7 @@ class RandomForestTrainer:
                 logger.info("Calculating permutation importance...")
                 result = permutation_importance(
                     best_model,
-                    X_test_imputed,
+                    X_test,
                     y_test,
                     n_repeats=10,
                     random_state=self.random_state,
