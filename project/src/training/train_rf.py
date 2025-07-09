@@ -152,7 +152,7 @@ class RandomForestTrainer:
 
             # Log model parameters
             logger.info("Logging fixed model hyperparameters:")
-            for key, value in self.rf_fixed_params.model_dump().items():
+            for key, value in self.rf_fixed_params.items():
                 logger.info(f"  {key}: {value}")
             logger.info("Logging grid search parameters:")
             for key, value in self.rf_grid_search_params.items():
