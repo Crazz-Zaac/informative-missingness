@@ -122,33 +122,33 @@ class RandomForestTrainer:
                 )
 
                 # Permutation importance
-                logger.info("Calculating permutation importance...")
-                result = permutation_importance(
-                    best_model,
-                    X_test,
-                    y_test,
-                    n_repeats=10,
-                    random_state=self.random_state,
-                    n_jobs=-1,
-                )
-                all_importances.append(
-                    pd.Series(result.importances_mean, index=X_test.columns)
-                )
+            #     logger.info("Calculating permutation importance...")
+            #     result = permutation_importance(
+            #         best_model,
+            #         X_test,
+            #         y_test,
+            #         n_repeats=10,
+            #         random_state=self.random_state,
+            #         n_jobs=-1,
+            #     )
+            #     all_importances.append(
+            #         pd.Series(result.importances_mean, index=X_test.columns)
+            #     )
 
-            # Aggregate importance
-            mean_importance = (
-                pd.concat(all_importances, axis=1)
-                .mean(axis=1)
-                .sort_values(ascending=False)
-            )
+            # # Aggregate importance
+            # mean_importance = (
+            #     pd.concat(all_importances, axis=1)
+            #     .mean(axis=1)
+            #     .sort_values(ascending=False)
+            # )
 
-            self.save_and_plot(
-                mean_importance=mean_importance, recalls=recalls, f1s=f1s, aucs=aucs
-            )
+            # self.save_and_plot(
+            #     mean_importance=mean_importance, recalls=recalls, f1s=f1s, aucs=aucs
+            # )
 
-            logger.info("\nTop 10 Features by Permutation Importance:")
-            for feature, importance in mean_importance.head(10).items():
-                logger.info(f"{feature}: {importance:.4f}")
+            # logger.info("\nTop 10 Features by Permutation Importance:")
+            # for feature, importance in mean_importance.head(10).items():
+            #     logger.info(f"{feature}: {importance:.2f}")
 
             # Log model parameters
             logger.info("Logging fixed model hyperparameters:")
