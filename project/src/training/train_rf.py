@@ -33,6 +33,7 @@ class RandomForestTrainer:
         
         self.rf_fixed_params = model_hyperparams.fixed_params
         self.rf_grid_search_params = model_hyperparams.grid_search_params
+        
         self.dataset = TabularDataset(
             window_size=self.config.data.tabular.window_size, config=self.config
         )
