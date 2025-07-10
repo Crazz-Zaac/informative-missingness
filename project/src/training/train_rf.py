@@ -105,9 +105,10 @@ class RandomForestTrainer:
                 best_model = grid_search.best_estimator_
                 best_estimators.append(best_model)
 
-                logger.info(
-                    f"Best Params for Fold {fold + 1}: {grid_search.best_params_}"
-                )
+                logger.info(f"Best hyperparameters from GridSearchCV (Fold {fold + 1}):")
+                for key, val in grid_search.best_params_.items():
+                    logger.info(f"  {key}: {val}")
+
 
                 # Evaluation
                 y_pred = best_model.predict(X_test)
@@ -159,6 +160,7 @@ class RandomForestTrainer:
                 logger.info(f"  {key}: {value}")
 
             # Summary
+            logger.info("\n=== Training Summary ===")
             logger.info(
                 f"\nMean Recall: {pd.Series(recalls).mean():.4f} ± {pd.Series(recalls).std():.4f}"
             )

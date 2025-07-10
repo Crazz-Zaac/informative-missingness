@@ -22,7 +22,8 @@ model:
         max_depth: [5, 10]
         min_samples_split: [2, 5]
         min_samples_leaf: [1]
-        class_weight:
+        class_weight:           
+          - null
           - "balanced"
           - { 0: 0.5, 1: 1 }
           - { 0: 0.5, 1: 2 }
