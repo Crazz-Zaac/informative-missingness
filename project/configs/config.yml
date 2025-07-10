@@ -32,7 +32,7 @@ model:
         random_state: 42
         max_depth: 10
         min_samples_split: 5
-        class_weight: { 0: 1, 1: 2 }
+        # class_weight: { 0: 1, 1: 2 }
 
     LogisticRegression:
       grid_search_params:

@@ -243,3 +243,9 @@ Class_weight ({0:1, 1:2})
 
     - Feature importance
 
+
+### TODO:
+- Check and add script to generate cohort_with_demographic_data.parquet file 
+- Train Random Forest on Categorical data 
+- Train on different cohorts
+- 

@@ -165,37 +165,6 @@ class TabularPreprocessingConfig(BaseModel):
             + patients_data["bin"].astype(str)
         )
 
-        # patients_data = (
-        #     patients_data
-        #     .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
-        #     .mean()
-        #     .unstack(level=-1)
-        #     .interpolate(method='linear', axis=1, limit_area="inside")  # interpolate only between observed values
-        #     .ffill(axis=1)  # fill missing values forward (after last measurement)
-        #     .bfill(axis=1)  # fill missing values backward (before first measurement)
-        #     .reset_index()
-        # )
-
-        # # Set multi-index and unstack to wide format
-        # patients_data = (
-        #     patients_data
-        #     .set_index(["hadm_id", "itemid"])
-        #     .unstack(level=-1)
-        # )
-
-        # # Reorganize columns if MultiIndex exists
-        # if isinstance(patients_data.columns, pd.MultiIndex):
-        #     patients_data.columns = (
-        #         patients_data.columns
-        #         .swaplevel(0, 1)
-        #         .sortlevel(0)  # equivalent to sort_index but works with MultiIndex
-        #     )
-
-        # # Flatten column names
-        # patients_data.columns = [
-        #     '_'.join(map(str, col)) if isinstance(col, tuple) else str(col)
-        #     for col in patients_data.columns
-        # ]
         df_ts = (
             patients_data
             .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
