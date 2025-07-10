@@ -70,6 +70,12 @@ class RandomForestTrainer:
         sgkf = StratifiedGroupKFold(
             n_splits=5, shuffle=True, random_state=self.random_state
         )
+        logger.info("Fixed model hyperparameters:")
+        for key, value in self.rf_fixed_params.items():
+            logger.info(f"  {key}: {value}")
+        logger.info("Grid search parameters to explore:")
+        for key, value in self.rf_grid_search_params.items():
+            logger.info(f"  {key}: {value}")
 
         try:
             for fold, (train_idx, test_idx) in enumerate(
@@ -151,18 +157,10 @@ class RandomForestTrainer:
             # for feature, importance in mean_importance.head(10).items():
             #     logger.info(f"{feature}: {importance:.2f}")
 
-            # Log model parameters
-            logger.info("Logging fixed model hyperparameters:")
-            for key, value in self.rf_fixed_params.items():
-                logger.info(f"  {key}: {value}")
-            logger.info("Logging grid search parameters:")
-            for key, value in self.rf_grid_search_params.items():
-                logger.info(f"  {key}: {value}")
-
             # Summary
             logger.info("\n=== Training Summary ===")
             logger.info(
-                f"\nMean Recall: {pd.Series(recalls).mean():.4f} ± {pd.Series(recalls).std():.4f}"
+                f"Mean Recall: {pd.Series(recalls).mean():.4f} ± {pd.Series(recalls).std():.4f}"
             )
             logger.info(
                 f"Mean F1:     {pd.Series(f1s).mean():.4f} ± {pd.Series(f1s).std():.4f}"
