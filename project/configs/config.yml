@@ -7,7 +7,7 @@ data:
     window_size: 7 # intitial window size for tabular data
     feature_type: "numeric" # categorical, numeric
     aggregation_window_size: 12 # hours for aggregation
-    training_feature: "target" # target, gender, race, anchor_age
+    training_feature: "gender" # target, gender, race, anchor_age
     age_threshold: 30 # age threshold for training feature
     insurance_type: private # private or non-private
   temporal:

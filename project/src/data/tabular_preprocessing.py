@@ -119,50 +119,41 @@ class TabularPreprocessingConfig(BaseModel):
         patients_data = patients_data.dropna(subset=["charttime", "dischtime"])
 
         # If training with race, ensure race column exists
-        if self.training_feature == "race" and "race" in patients_data.columns:
-            # map race to numerical values
-            logger.info("Mapping race to numerical values")
-            race_encoder = LabelEncoder()
-            patients_data["race"] = patients_data["race"].apply(self.map_race)
-            patients_data["race"] = race_encoder.fit_transform(patients_data["race"])
-            cohort_data = patients_data[["hadm_id", "subject_id", "race"]].drop_duplicates()
-        else:
-            raise ValueError("Missing race column in data; cannot proceed.")
+        if self.training_feature == "race":
+            if "race" in patients_data.columns:
+                logger.info("Mapping race to numerical values")
+                race_encoder = LabelEncoder()
+                patients_data["race"] = patients_data["race"].apply(self.map_race)
+                patients_data["race"] = race_encoder.fit_transform(patients_data["race"])
+                cohort_data = patients_data[["hadm_id", "subject_id", "race"]].drop_duplicates()
+            else:
+                raise ValueError("Missing race column in data; cannot proceed.")
 
-        # If training with gender, ensure gender column exists 
-        if self.training_feature == "gender" and "gender" in patients_data.columns:
-            # map M and F to 1 and 0
-            logger.info("Mapping Male to 1 and Female to 0")
-            patients_data["gender"] = patients_data["gender"].map({"M": 1, "F": 0})
-            cohort_data = patients_data[
-                ["hadm_id", "subject_id", "gender"]
-            ].drop_duplicates()
-        else:
-            raise ValueError("Missing gender column in data; cannot proceed.")
+        elif self.training_feature == "gender":
+            if "gender" in patients_data.columns:
+                logger.info("Mapping Male to 1 and Female to 0")
+                patients_data["gender"] = patients_data["gender"].map({"M": 1, "F": 0})
+                cohort_data = patients_data[["hadm_id", "subject_id", "gender"]].drop_duplicates()
+            else:
+                raise ValueError("Missing gender column in data; cannot proceed.")
 
-        # If training with anchor_age, set it to 0 if age < threshold, otherwise 1
-        if self.training_feature == "anchor_age" and "anchor_age" in patients_data.columns:
-            logger.info(
-                f"Setting anchor_age to 0 if age < {self.age_threshold} otherwise 1"
-            )
-            patients_data["anchor_age"] = (
-                patients_data["anchor_age"] >= self.age_threshold
-            ).astype(int)
-            cohort_data = patients_data[
-                ["hadm_id", "subject_id", "anchor_age"]
-            ].drop_duplicates()
-        else:
-            raise ValueError(
-                "Missing anchor_age column in data; cannot proceed."
-            )
+        elif self.training_feature == "anchor_age":
+            if "anchor_age" in patients_data.columns:
+                logger.info(f"Setting anchor_age to 0 if age < {self.age_threshold} otherwise 1")
+                patients_data["anchor_age"] = (patients_data["anchor_age"] >= self.age_threshold).astype(int)
+                cohort_data = patients_data[["hadm_id", "subject_id", "anchor_age"]].drop_duplicates()
+            else:
+                raise ValueError("Missing anchor_age column in data; cannot proceed.")
 
-        # If training with target, ensure target column exists and is processed
-        if self.training_feature == "target" and "target" in patients_data.columns:
-            cohort_data = patients_data[
-                ["hadm_id", "subject_id", "target"]
-            ].drop_duplicates()
+        elif self.training_feature == "target":
+            if "target" in patients_data.columns:
+                cohort_data = patients_data[["hadm_id", "subject_id", "target"]].drop_duplicates()
+            else:
+                raise ValueError("Missing target column in data; cannot proceed.")
+
         else:
-            raise ValueError("Missing target column in data; cannot proceed.")
+            raise ValueError(f"Unknown training feature: {self.training_feature}")
+
         
         patients_data["hours_before_discharge"] = (
             patients_data["dischtime"] - patients_data["charttime"]
