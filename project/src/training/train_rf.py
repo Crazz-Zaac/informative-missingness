@@ -157,6 +157,14 @@ class RandomForestTrainer:
             # for feature, importance in mean_importance.head(10).items():
             #     logger.info(f"{feature}: {importance:.2f}")
 
+            # Log model parameters
+            logger.info("Logging fixed model hyperparameters:")
+            for key, value in self.rf_fixed_params.items():
+                logger.info(f"  {key}: {value}")
+            logger.info("Logging grid search parameters:")
+            for key, value in self.rf_grid_search_params.items():
+                logger.info(f"  {key}: {value}")
+
             # Summary
             logger.info("\n=== Training Summary ===")
             logger.info(

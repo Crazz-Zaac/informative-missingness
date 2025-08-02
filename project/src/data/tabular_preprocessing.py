@@ -45,10 +45,6 @@ class TabularPreprocessingConfig(BaseModel):
             insurance_type=insurance_type,  #
         )
 
-    def assign_time_bin(self, hours_before_discharge, window_hours: int) -> np.ndarray:
-        """Assign records to fixed time bins (e.g., 0-6h, 6-12h)."""
-        return np.floor(hours_before_discharge / window_hours) * window_hours
-
     def extract_window_size(self, filename: str) -> int:
         """Extract window_size (e.g., 7 or 14) from filenames like '*_7_days.parquet'."""
         match = re.search(r"_(\d+)_days_prior", filename)
@@ -72,7 +68,7 @@ class TabularPreprocessingConfig(BaseModel):
     def map_race(self, race):
         if pd.isna(race):
             return "Unknown or Not Reported"
-
+        
         race = race.upper()
 
         if "HISPANIC" in race or "LATINO" in race or "SOUTH AMERICAN" in race:
