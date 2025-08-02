@@ -223,11 +223,12 @@ class TabularPreprocessingConfig(BaseModel):
 
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
-        numeric_output = f"{base_name}_numeric.parquet"
+        file_saved_to = f"{base_name}_{self.training_feature}.parquet"
         df_mx.to_parquet(
-            os.path.join(self.preprocessed_data_dir, numeric_output), index=False
+            os.path.join(self.preprocessed_data_dir, file_saved_to), index=False
         )
-        logger.info(f"Numeric data shape: {df_mx.shape}")
+        logger.info(f"Data prepared for {self.training_feature} and saved to {file_saved_to}")
+        logger.info(f"Data shape: {df_mx.shape}")
 
         # Return the output filenames
         return df_mx, target_data, groups
