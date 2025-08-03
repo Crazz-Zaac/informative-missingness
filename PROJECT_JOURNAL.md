@@ -141,7 +141,6 @@
         - Train with oversampling (+) weighted loss function
         - Train it on X, M and Delta with different combinations
         - Then start with on GRU and GRU-D
-        - Train it on X, M and Delta with different combinations
         - Compare their perfo- Aggregate by 6 hours in the preprocessing instead of daily -> every two hours/6 hours
 - Stratify the data such that the model doesn't see the data that was used during the training
     - To generate Cross Validation Split

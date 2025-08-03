@@ -5,6 +5,8 @@ data:
   tabular:
     data_path: "../dataset/preprocessed_tabular/"
     window_size: 7 # intitial window size for tabular data
+    # x: features, m: missingness, delta: elapsed time since last observation
+    feature_combinations: "m" # x, m, delta, x_delta, m_delta, x_m_delta
     feature_type: "numeric" # categorical, numeric
     aggregation_window_size: 12 # hours for aggregation
     training_feature: "gender" # target, gender, race, anchor_age

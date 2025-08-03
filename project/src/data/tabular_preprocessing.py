@@ -1,11 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import pandas as pd
-from pandas import DataFrame, MultiIndex
 import numpy as np
 import os
 import re
 from pathlib import Path
-from sklearn.impute import KNNImputer
 from typing import List
 from sklearn.preprocessing import LabelEncoder
 from loguru import logger
@@ -16,6 +14,7 @@ class TabularPreprocessingConfig(BaseModel):
     preprocessed_data_dir: Path
     window_size: int
     aggregation_window_size: int  # aggregation by hours, e.g., 2 hours
+    feature_combinations: str  # e.g., ["x", "m", "delta", "x_m", "x_delta", "m_delta", "x_m_delta"]
     feature_type: str
     training_feature: str
     age_threshold: int
@@ -29,6 +28,7 @@ class TabularPreprocessingConfig(BaseModel):
         aggregation_window_size: int,
         feature_type: str,
         training_feature: str,
+        feature_combinations: str,
         age_threshold: int,  # Default age threshold for filtering patients
         insurance_type: str,
     ) -> "TabularPreprocessingConfig":
@@ -40,6 +40,7 @@ class TabularPreprocessingConfig(BaseModel):
             window_size=window_size,
             aggregation_window_size=aggregation_window_size,  # Default aggregation window size (e.g., 2 hours)
             feature_type=feature_type,  # e.g., "numeric" or "categorical"
+            feature_combinations=feature_combinations,
             training_feature=training_feature,  # e.g., "target"
             age_threshold=age_threshold,  # Default age threshold for filtering patients
             insurance_type=insurance_type,  #
@@ -163,17 +164,36 @@ class TabularPreprocessingConfig(BaseModel):
             + patients_data["bin"].astype(str)
         )
         
-        # Pivot the data to create a time series format
-        df_ts = (
-            patients_data
-            .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
-            .mean()
-            .unstack(level=-1)  # unstack 'bin' to columns
-            .interpolate(method="linear", axis=1, limit_area="inside")  # interpolate between observed values
-            .ffill(axis=1)  # forward fill missing after last measurement
-            .bfill(axis=1)  # backward fill missing before first measurement
-            .reset_index()
-        )
+        if self.feature_combinations == "x":            
+            # Pivot the data to create a time series format
+            
+            df_ts = (
+                patients_data
+                .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+                .mean()
+                .unstack(level=-1)  # unstack 'bin' to columns
+                .interpolate(method="linear", axis=1, limit_area="inside")  # interpolate between observed values
+                .ffill(axis=1)  # forward fill missing after last measurement
+                .bfill(axis=1)  # backward fill missing before first measurement
+                .reset_index()  # reset index to have 'hadm_id' as a column
+            )
+            
+        # if the feature_combinations is m, create binary features for missingness
+        elif self.feature_combinations == "m":
+            # Create binary features for missingness
+            logger.info("Creating binary features for missingness")
+            try:
+                df_ts = (
+                    patients_data
+                    .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+                    .count()
+                    .unstack(level=-1)
+                    .notna()
+                    .astype(int)  # Convert to binary (0/1)
+                    .reset_index()
+                )
+            except Exception as e:
+                logger.error(f"Error occurred while creating binary features for missingness. {e}")
 
         # Set index on hadm_id and itemid
         df_ts = df_ts.set_index(["hadm_id", "itemid"])
