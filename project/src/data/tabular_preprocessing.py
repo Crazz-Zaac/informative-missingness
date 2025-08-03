@@ -45,15 +45,6 @@ class TabularPreprocessingConfig(BaseModel):
             insurance_type=insurance_type,  #
         )
 
-    def extract_window_size(self, filename: str) -> int:
-        """Extract window_size (e.g., 7 or 14) from filenames like '*_7_days.parquet'."""
-        match = re.search(r"_(\d+)_days_prior", filename)
-        if not match:
-            raise ValueError(
-                f"Filename '{filename}' must follow pattern '*_X_days_prior.parquet'"
-            )
-        return int(match.group(1))
-
     def load_data(self, filename: str) -> pd.DataFrame:
         """Load patient data from a specific Parquet file."""
         logger.info(f"Loading data from {filename} and removing any duplicate rows.")
@@ -155,6 +146,7 @@ class TabularPreprocessingConfig(BaseModel):
             raise ValueError(f"Unknown training feature: {self.training_feature}")
 
         
+        # Convert charttime and dischtime to datetime if not already and calculate hours before discharge
         patients_data["hours_before_discharge"] = (
             patients_data["dischtime"] - patients_data["charttime"]
         ).dt.total_seconds() / 3600
@@ -170,7 +162,8 @@ class TabularPreprocessingConfig(BaseModel):
             + "_"
             + patients_data["bin"].astype(str)
         )
-
+        
+        # Pivot the data to create a time series format
         df_ts = (
             patients_data
             .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
