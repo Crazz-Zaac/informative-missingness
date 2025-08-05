@@ -2,7 +2,8 @@ import pandas as pd
 from typing import Tuple
 from loguru import logger
 
-from .tabular_preprocessing import TabularPreprocessingConfig
+from .data_preprocessing import TabularPreprocessingConfig
+from src.data.tabular_data_processor import TabularDataPreprocessor
 from src.config.schemas import ExperimentConfig
 
 
@@ -36,7 +37,9 @@ class TabularDataset:
             insurance_type=self.insurance_type,
         )
 
-        X, y, groups = config_obj.preprocess_and_save(self.input_filename)
-        
+        data_processor = TabularDataPreprocessor(config=config_obj)
+        logger.info("Starting data preprocessing...")
+        X, y, groups = data_processor.preprocess_and_save(self.input_filename)
+
         return X, y, groups
 

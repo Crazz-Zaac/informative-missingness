@@ -1,6 +1,6 @@
 from .data_loader import load_config
 from .dataset import TabularDataset
-from .tabular_preprocessing import TabularPreprocessingConfig
+from .tabular_data_processor import TabularPreprocessingConfig
 from .temporal_preprocessing import TemporalPreprocessingConfig
 # from .temporal_preprocessing import temporal_preprocessing
 
@@ -8,7 +8,7 @@ from .temporal_preprocessing import TemporalPreprocessingConfig
 __all__ = [
     "data_loader",
     "dataset",
-    "tabular_preprocessing",
+    "tabular_data_processor",
     "temporal_preprocessing",
 
 ]

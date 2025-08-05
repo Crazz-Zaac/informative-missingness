@@ -1,51 +1,29 @@
-from pydantic import BaseModel
 import pandas as pd
-import numpy as np
 import os
 import re
 from pathlib import Path
 from typing import List
 from sklearn.preprocessing import LabelEncoder
 from loguru import logger
+from .data_preprocessing import TabularPreprocessingConfig
 
 
-class TabularPreprocessingConfig(BaseModel):
-    raw_data_dir: Path
-    preprocessed_data_dir: Path
-    window_size: int
-    aggregation_window_size: int  # aggregation by hours, e.g., 2 hours
-    feature_combinations: str  # e.g., ["x", "m", "delta", "x_m", "x_delta", "m_delta", "x_m_delta"]
-    feature_type: str
-    training_feature: str
-    age_threshold: int
-    insurance_type: str
+class TabularDataPreprocessor:
 
-    @classmethod
-    # Create a configuration instance with default paths and specified window size.
-    def from_defaults(
-        cls,
-        window_size: int,
-        aggregation_window_size: int,
-        feature_type: str,
-        training_feature: str,
-        feature_combinations: str,
-        age_threshold: int,  # Default age threshold for filtering patients
-        insurance_type: str,
-    ) -> "TabularPreprocessingConfig":
-        """Create a configuration instance with default paths and specified window size."""
-        parent_dir = Path(__file__).parent.parent.parent
-        return cls(
-            raw_data_dir=parent_dir / "dataset" / "raw",
-            preprocessed_data_dir=parent_dir / "dataset" / "preprocessed_tabular",
-            window_size=window_size,
-            aggregation_window_size=aggregation_window_size,  # Default aggregation window size (e.g., 2 hours)
-            feature_type=feature_type,  # e.g., "numeric" or "categorical"
-            feature_combinations=feature_combinations,
-            training_feature=training_feature,  # e.g., "target"
-            age_threshold=age_threshold,  # Default age threshold for filtering patients
-            insurance_type=insurance_type,  #
-        )
-
+    def __init__(self, config: TabularPreprocessingConfig):
+        self.config = config
+        self.raw_data_dir = config.raw_data_dir
+        self.preprocessed_data_dir = config.preprocessed_data_dir
+        self.window_size = config.window_size
+        self.aggregation_window_size = config.aggregation_window_size
+        self.feature_combinations = config.feature_combinations
+        self.feature_type = config.feature_type
+        self.training_feature = config.training_feature
+        self.age_threshold = config.age_threshold
+        self.insurance_type = config.insurance_type
+        self.preprocessed_data_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Initialized TabularDataPreprocessor with config: {self.config}")
+    
     def load_data(self, filename: str) -> pd.DataFrame:
         """Load patient data from a specific Parquet file."""
         logger.info(f"Loading data from {filename} and removing any duplicate rows.")
