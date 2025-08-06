@@ -16,7 +16,7 @@ data:
     data_path: "../dataset/preprocessed_temporal/"
 
 model:
-  model_type: "RandomForest" #"GRUD", "LSTM", "LogisticRegression"
+  model_type: ["RandomForest", "LogisticRegression", "GRU"] #, "LSTM", "LogisticRegression"
   hyperparameters:
     RandomForest:
       grid_search_params:
@@ -45,6 +45,16 @@ model:
         penalty: "l2"
         C: 1.0
         solver: "liblinear"
+    
+    GRUD:
+      grid_search_params:
+        hidden_size: [64, 128]
+        num_layers: [1, 2]
+        dropout: [0.1, 0.2]
+      fixed_params:
+        hidden_size: 128
+        num_layers: 2
+        dropout: 0.2
 
 training:
   validation_split: 0.2

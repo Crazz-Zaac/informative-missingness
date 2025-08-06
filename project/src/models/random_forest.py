@@ -3,7 +3,7 @@ from src.config.schemas import RandomForestFixedParams
 
 
 class RandomForestModel:
-    def __init__(self, config: RandomForestFixedParams):
+    def __init__(self, config: dict):
         self.config = config
         self.model = self._initialize_model()
 

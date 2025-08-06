@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Literal, Union, Any
 class ModelTypeEnum(str, Enum):
     RF = "RandomForest"
     GRU = "GRU"
-    GRUD = "GRU_D"
+    LR = "LogisticRegression"
 
 
 class MetricsEnum(str, Enum):
@@ -49,6 +49,17 @@ class RandomForestHyperParams(BaseModel):
     grid_search_params: Optional[RandomForestGridSearchParams] = None
 
 
+class GRUModelParams(BaseModel):
+    input_size: int
+    hidden_size: int
+    num_layers: int
+    dropout: float
+    bidirectional: bool 
+    learning_rate: float 
+    batch_size: int 
+    epochs: int 
+    device: str 
+
 # Model configurations for different models
 class HyperParams(BaseModel):
     fixed_params: Dict[str, Any]
@@ -61,7 +72,7 @@ class ModelHyperParams(BaseModel):
 
 # A dictionary to map model types to their hyperparameters
 class ModelConfig(BaseModel):
-    model_type: ModelTypeEnum
+    model_type: Union[ModelTypeEnum, List[ModelTypeEnum]]
     hyperparameters: ModelHyperParams
 
 

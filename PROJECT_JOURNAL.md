@@ -187,8 +187,6 @@
 ### 2025-06-06
 [x] Attended a meeting (11 AM)
 - [x] Aggregate by 6 hours in the preprocessing instead of daily -> every two hours/6 hours [2,6,12,24]
-
-
 - [x] Stratify the data such that the model doesn't see the data (from the same patient) that was used during the training
 - To generate Cross Validation Split on the patients instead of admissions
 - train/test splits on patients -> train/test splits on admissions for those patients

@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from src.config.schemas import ExperimentConfig
+from src.config.schemas import ExperimentConfig, ModelTypeEnum
 from src.data.dataset import TabularDataset
 from src.models.random_forest import RandomForestModel
 from loguru import logger
@@ -18,16 +18,11 @@ class RandomForestTrainer:
 
     def __init__(self, config: ExperimentConfig):
         self.config = config
-        selected_model = config.model.model_type.value
-        if selected_model != "RandomForest":
-            raise ValueError(
-                f"Unsupported model type. Expected 'RandomForest'."
-            )
         logger.info(f"Initializing RandomForestTrainer ")
         # since the hyperparameters is a class, we need to access it dynamically
-        model_hyperparams = getattr(self.config.model.hyperparameters, selected_model, None)
+        model_hyperparams = self.config.model.hyperparameters.RandomForest
         if model_hyperparams is None:
-            raise ValueError(f"No hyperparameters provided for model: {selected_model}")
+            raise ValueError(f"No hyperparameters provided for model: {ModelTypeEnum.RF}")
         
         self.rf_fixed_params = model_hyperparams.fixed_params
         self.rf_grid_search_params = model_hyperparams.grid_search_params
