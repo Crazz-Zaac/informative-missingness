@@ -245,4 +245,10 @@ Class_weight ({0:1, 1:2})
 - Check and add script to generate cohort_with_demographic_data.parquet file 
 - Train Random Forest on Categorical data 
 - Train on different cohorts
+
+### 2025-08-08
+#### TODO:
+- Extract the data for `mimic_iv_labs_apl_tr_14_days.csv`
+- Implement X-GBoost, Gradient Boost
+- Record Area Under the Precison-Recall Curve (AUPRC) value as well
 - 

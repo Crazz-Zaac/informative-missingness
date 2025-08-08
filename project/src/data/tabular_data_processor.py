@@ -125,6 +125,10 @@ class TabularDataPreprocessor:
             raise ValueError(f"Unknown training feature: {self.training_feature}")
 
         
+        #TODO: descritize the time based on noon and midnight
+        
+        
+        # descritize the time into bins based on aggregation_window_size
         # Convert charttime and dischtime to datetime if not already and calculate hours before discharge
         patients_data["hours_before_discharge"] = (
             patients_data["dischtime"] - patients_data["charttime"]

@@ -129,6 +129,9 @@ class RandomForestTrainer:
             for key, value in self.rf_grid_search_params.items():
                 logger.info(f"  {key}: {value}")
 
+            
+            # TODO: Record Area Under the Precison-Recall Curve (AUPRC)
+            
             # Summary
             logger.info("\n=== Training Summary ===")
             logger.info(
