@@ -59,15 +59,23 @@ def get_engine():
 
 # Prepare output directory
 temp_dir = Path(__file__).resolve().parents[1] / "dataset" / "temp"
-output_dir = Path(__file__).resolve().parents[1] / "dataset" / "raw"
-output_dir.mkdir(exist_ok=True)
+raw_output_dir = Path(__file__).resolve().parents[1] / "dataset" / "raw"
+temp_dir.mkdir(exist_ok=True)
+raw_output_dir.mkdir(exist_ok=True)
+
+
+demographics_file = "aplasia_with_demographics_data.parquet"
+output_file_name = "aplasia_lab_events_data_with_demographics.parquet"
+seven_days_file = "aplasia_lab_events_data_7_days_prior.parquet"
+fourteen_days_file = "aplasia_lab_events_data_14_days_prior.parquet"
+
 
 # Load cohort
 parquet_path = (
     Path(__file__).resolve().parents[1]
     / "dataset"
     / "raw"
-    / "cohort_with_demographic_data.parquet"
+    / demographics_file
 )
 cohort_df = pd.read_parquet(parquet_path)
 
@@ -260,9 +268,26 @@ if __name__ == "__main__":
         
         logger.info("=" * 60)
         
-        final_df.to_parquet(output_dir / "lab_event_data_with_demographics.parquet", index=False)
-        logger.info(f"✅ Done. Saved {len(final_df)} lab events to lab_event_data_with_demographics.parquet")
-        logger.info(f"📁 Logs saved to: {log_dir}")
+        # Save final DataFrame to parquet
+        final_df.to_parquet(raw_output_dir / output_file_name, index=False)
+        logger.success(f"✅ Done. Saved {len(final_df)} lab events to lab_event_data_with_demographics.parquet")
         
+        # Split into 7 and 14 days and save the datasets
+        logger.info("Splitting data into 7 and 14 days datasets...")
+        seven_days_df = final_df[
+            (final_df['charttime'] >= final_df['dischtime'] - pd.Timedelta(days=7)) &
+            (final_df['charttime'] <= final_df['dischtime'])
+        ]
+        fourteen_days_df = final_df[
+            (final_df['charttime'] >= final_df['dischtime'] - pd.Timedelta(days=14)) &
+            (final_df['charttime'] <= final_df['dischtime'])
+        ]
+
+        seven_days_df.to_parquet(raw_output_dir / seven_days_file, index=False)
+        fourteen_days_df.to_parquet(raw_output_dir / fourteen_days_file, index=False)
+        logger.success(f"✅ 7 days dataset saved to: {raw_output_dir / seven_days_file}")
+        logger.success(f"✅ 14 days dataset saved to: {raw_output_dir / fourteen_days_file}")
+        logger.success(f"📁 Logs saved to: {log_dir}")
+
     else:
         logger.error("No valid parquet files to concatenate!")

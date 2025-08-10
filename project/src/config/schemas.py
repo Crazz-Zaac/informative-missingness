@@ -80,6 +80,7 @@ class ModelConfig(BaseModel):
 # Tabular data configuration for the experiment
 class TabularDataConfig(BaseModel):
     data_path: str
+    training_data: str 
     window_size: int
     feature_type: Literal["numeric", "categorical"]
     feature_combinations: Literal["x", "m", "delta", "x_m", "x_delta", "m_delta", "x_m_delta"]

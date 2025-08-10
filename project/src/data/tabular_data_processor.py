@@ -13,6 +13,7 @@ class TabularDataPreprocessor:
     def __init__(self, config: TabularPreprocessingConfig):
         self.config = config
         self.raw_data_dir = config.raw_data_dir
+        self.training_data = config.training_data
         self.preprocessed_data_dir = config.preprocessed_data_dir
         self.window_size = config.window_size
         self.aggregation_window_size = config.aggregation_window_size
@@ -23,7 +24,7 @@ class TabularDataPreprocessor:
         self.insurance_type = config.insurance_type
         self.preprocessed_data_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Initialized TabularDataPreprocessor with config: {self.config}")
-    
+
     def load_data(self, filename: str) -> pd.DataFrame:
         """Load patient data from a specific Parquet file."""
         logger.info(f"Loading data from {filename} and removing any duplicate rows.")
@@ -38,7 +39,7 @@ class TabularDataPreprocessor:
     def map_race(self, race):
         if pd.isna(race):
             return "Unknown or Not Reported"
-        
+
         race = race.upper()
 
         if "HISPANIC" in race or "LATINO" in race or "SOUTH AMERICAN" in race:
@@ -94,8 +95,12 @@ class TabularDataPreprocessor:
                 logger.info("Mapping race to numerical values")
                 race_encoder = LabelEncoder()
                 patients_data["race"] = patients_data["race"].apply(self.map_race)
-                patients_data["race"] = race_encoder.fit_transform(patients_data["race"])
-                cohort_data = patients_data[["hadm_id", "subject_id", "race"]].drop_duplicates()
+                patients_data["race"] = race_encoder.fit_transform(
+                    patients_data["race"]
+                )
+                cohort_data = patients_data[
+                    ["hadm_id", "subject_id", "race"]
+                ].drop_duplicates()
             else:
                 raise ValueError("Missing race column in data; cannot proceed.")
 
@@ -103,31 +108,39 @@ class TabularDataPreprocessor:
             if "gender" in patients_data.columns:
                 logger.info("Mapping Male to 1 and Female to 0")
                 patients_data["gender"] = patients_data["gender"].map({"M": 1, "F": 0})
-                cohort_data = patients_data[["hadm_id", "subject_id", "gender"]].drop_duplicates()
+                cohort_data = patients_data[
+                    ["hadm_id", "subject_id", "gender"]
+                ].drop_duplicates()
             else:
                 raise ValueError("Missing gender column in data; cannot proceed.")
 
         elif self.training_feature == "anchor_age":
             if "anchor_age" in patients_data.columns:
-                logger.info(f"Setting anchor_age to 0 if age < {self.age_threshold} otherwise 1")
-                patients_data["anchor_age"] = (patients_data["anchor_age"] >= self.age_threshold).astype(int)
-                cohort_data = patients_data[["hadm_id", "subject_id", "anchor_age"]].drop_duplicates()
+                logger.info(
+                    f"Setting anchor_age to 0 if age < {self.age_threshold} otherwise 1"
+                )
+                patients_data["anchor_age"] = (
+                    patients_data["anchor_age"] >= self.age_threshold
+                ).astype(int)
+                cohort_data = patients_data[
+                    ["hadm_id", "subject_id", "anchor_age"]
+                ].drop_duplicates()
             else:
                 raise ValueError("Missing anchor_age column in data; cannot proceed.")
 
         elif self.training_feature == "target":
             if "target" in patients_data.columns:
-                cohort_data = patients_data[["hadm_id", "subject_id", "target"]].drop_duplicates()
+                cohort_data = patients_data[
+                    ["hadm_id", "subject_id", "target"]
+                ].drop_duplicates()
             else:
                 raise ValueError("Missing target column in data; cannot proceed.")
 
         else:
             raise ValueError(f"Unknown training feature: {self.training_feature}")
 
-        
-        #TODO: descritize the time based on noon and midnight
-        
-        
+        # TODO: descritize the time based on noon and midnight
+
         # descritize the time into bins based on aggregation_window_size
         # Convert charttime and dischtime to datetime if not already and calculate hours before discharge
         patients_data["hours_before_discharge"] = (
@@ -145,29 +158,29 @@ class TabularDataPreprocessor:
             + "_"
             + patients_data["bin"].astype(str)
         )
-        
-        if self.feature_combinations == "x":            
+
+        if self.feature_combinations == "x":
             # Pivot the data to create a time series format
-            
+
             df_ts = (
-                patients_data
-                .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+                patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
                 .mean()
                 .unstack(level=-1)  # unstack 'bin' to columns
-                .interpolate(method="linear", axis=1, limit_area="inside")  # interpolate between observed values
+                .interpolate(
+                    method="linear", axis=1, limit_area="inside"
+                )  # interpolate between observed values
                 .ffill(axis=1)  # forward fill missing after last measurement
                 .bfill(axis=1)  # backward fill missing before first measurement
                 .reset_index()  # reset index to have 'hadm_id' as a column
             )
-            
+
         # if the feature_combinations is m, create binary features for missingness
         elif self.feature_combinations == "m":
             # Create binary features for missingness
             logger.info("Creating binary features for missingness")
             try:
                 df_ts = (
-                    patients_data
-                    .groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+                    patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
                     .count()
                     .unstack(level=-1)
                     .notna()
@@ -175,7 +188,9 @@ class TabularDataPreprocessor:
                     .reset_index()
                 )
             except Exception as e:
-                logger.error(f"Error occurred while creating binary features for missingness. {e}")
+                logger.error(
+                    f"Error occurred while creating binary features for missingness. {e}"
+                )
 
         # Set index on hadm_id and itemid
         df_ts = df_ts.set_index(["hadm_id", "itemid"])
@@ -202,9 +217,7 @@ class TabularDataPreprocessor:
         )
 
         groups = (
-            cohort_data.set_index("hadm_id")
-            .reindex(df_mx.index)["subject_id"]
-            .values
+            cohort_data.set_index("hadm_id").reindex(df_mx.index)["subject_id"].values
         )
 
         # Generate output filenames
@@ -213,7 +226,9 @@ class TabularDataPreprocessor:
         df_mx.to_parquet(
             os.path.join(self.preprocessed_data_dir, file_saved_to), index=False
         )
-        logger.info(f"Data prepared for {self.training_feature} and saved to {file_saved_to}")
+        logger.info(
+            f"Data prepared for {self.training_feature} and saved to {file_saved_to}"
+        )
         logger.info(f"Data shape: {df_mx.shape}")
 
         # Return the output filenames
@@ -246,16 +261,14 @@ class TabularDataPreprocessor:
         #     logger.info(f"Categorical data shape: {processed_categorical_data.shape}")
         #     return processed_categorical_data
 
-    def process_window_file_only(self):
-        """Process the file that matches the specified window size"""
-        pattern = re.compile(rf".*_{self.window_size}_days_prior\.parquet")
 
+    def process_training_data_file(self):
+        pattern = (
+            f"{self.training_data}_lab_events_{self.window_size}_days_prior.parquet"
+        )
         for file in self.raw_data_dir.glob("*.parquet"):
-            if pattern.match(file.name):
+            if file.name == pattern:
                 logger.info(f"Processing file: {file.name}")
                 self.preprocess_and_save(file.name)
-                return  # process only the first match
-
-        raise FileNotFoundError(
-            f"No file found in {self.raw_data_dir} for window size {self.window_size}"
-        )
+                return
+        raise FileNotFoundError(f"No file matching '{pattern}' in {self.raw_data_dir}")

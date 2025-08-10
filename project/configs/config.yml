@@ -4,6 +4,7 @@ data:
   test_size: 0.2 # proportion of data to be used for testing
   tabular:
     data_path: "../dataset/preprocessed_tabular/"
+    training_data: "cohort1" # file name for tabular data
     window_size: 7 # intitial window size for tabular data
     # x: features, m: missingness, delta: elapsed time since last observation
     feature_combinations: "m" # x, m, delta, x_delta, m_delta, x_m_delta

@@ -10,7 +10,7 @@ from src.config.schemas import ExperimentConfig
 class TabularDataset:
     def __init__(self, window_size: int, config: ExperimentConfig):
         self.window_size = window_size
-        self.input_filename = f"lab_events_{window_size}_days_prior.parquet"
+        self.input_filename = f"{config.data.tabular.training_data}_lab_events_data_{window_size}_days_prior.parquet"
         self.config = config
         self.feature_combinations = self.config.data.tabular.feature_combinations
         self.feature_type = self.config.data.tabular.feature_type
@@ -28,6 +28,7 @@ class TabularDataset:
         )
 
         config_obj = TabularPreprocessingConfig.from_defaults(
+            training_data=self.config.data.tabular.training_data,
             window_size=self.window_size,
             feature_type=self.feature_type,
             feature_combinations=self.feature_combinations,
