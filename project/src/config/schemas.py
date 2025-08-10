@@ -9,8 +9,9 @@ from typing import Optional, List, Dict, Literal, Union, Any
 
 class ModelTypeEnum(str, Enum):
     RF = "RandomForest"
-    GRU = "GRU"
+    GradBoost = "GradientBoosting"
     LR = "LogisticRegression"
+    XGBoost = "XGBoost"
 
 
 class MetricsEnum(str, Enum):
@@ -28,6 +29,7 @@ class LoggingLevelEnum(str, Enum):
     CRITICAL = "critical"
 
 
+# Random Forest model hyperparameters
 class RandomForestGridSearchParams(BaseModel):
     n_estimators: List[int]
     max_depth: List[int]
@@ -49,26 +51,78 @@ class RandomForestHyperParams(BaseModel):
     grid_search_params: Optional[RandomForestGridSearchParams] = None
 
 
-class GRUModelParams(BaseModel):
-    input_size: int
-    hidden_size: int
-    num_layers: int
-    dropout: float
-    bidirectional: bool 
-    learning_rate: float 
-    batch_size: int 
-    epochs: int 
-    device: str 
+# Gradient Boosting model hyperparameters
+class GradBoostGridSearchParams(BaseModel):
+    learning_rate: List[float]
+    max_iter: List[int]
+    max_depth: List[Optional[int]]
+
+
+class GradBoostFixedParams(BaseModel):
+    learning_rate: float
+    max_iter: int
+    max_depth: int
+    class_weight: Union[str, dict[int, float]]
+
+
+class GradBoostHyperParams(BaseModel):
+    fixed_params: GradBoostFixedParams
+    grid_search_params: Optional[GradBoostGridSearchParams] = None
+
+
+# Logistic Regression model hyperparameters
+class LogisticRegressionFixedParams(BaseModel):
+    penalty: str
+    C: float
+    solver: str
+
+
+class LogisticRegressionGridSearchParams(BaseModel):
+    penalty: List[str]
+    C: List[float]
+    solver: List[str]
+
+
+class LogisticRegressionHyperParams(BaseModel):
+    fixed_params: LogisticRegressionFixedParams
+    grid_search_params: Optional[LogisticRegressionGridSearchParams] = None
+
+
+# XGBoost model hyperparameters
+class XGBoostFixedParams(BaseModel):
+    n_estimators: int
+    max_depth: int
+    learning_rate: float
+    scale_pos_weight: Optional[float]  # for imbalanced datasets
+    objective: Optional[str]  # default objective for binary
+    eval_metric: Optional[str]
+
+
+class XGBoostGridSearchParams(BaseModel):
+    n_estimators: List[int]
+    max_depth: List[int]
+    learning_rate: List[float]
+    scale_pos_weight: Optional[List[float]]
+    objective: Optional[List[str]]
+
+
+class XGBoostHyperParams(BaseModel):
+    fixed_params: XGBoostFixedParams
+    grid_search_params: Optional[XGBoostGridSearchParams] = None
+
 
 # Model configurations for different models
 class HyperParams(BaseModel):
     fixed_params: Dict[str, Any]
     grid_search_params: Dict[str, Any]
 
+
 class ModelHyperParams(BaseModel):
     RandomForest: Optional[HyperParams] = None
+    GradientBoosting: Optional[HyperParams] = None
     LogisticRegression: Optional[HyperParams] = None
-    # more models to be added here later
+    XGBoost: Optional[HyperParams] = None
+
 
 # A dictionary to map model types to their hyperparameters
 class ModelConfig(BaseModel):
@@ -76,14 +130,15 @@ class ModelConfig(BaseModel):
     hyperparameters: ModelHyperParams
 
 
-
 # Tabular data configuration for the experiment
 class TabularDataConfig(BaseModel):
     data_path: str
-    training_data: str 
+    training_data: str
     window_size: int
     feature_type: Literal["numeric", "categorical"]
-    feature_combinations: Literal["x", "m", "delta", "x_m", "x_delta", "m_delta", "x_m_delta"]
+    feature_combinations: Literal[
+        "x", "m", "delta", "x_m", "x_delta", "m_delta", "x_m_delta"
+    ]
     aggregation_window_size: int = Field(
         2, gt=0, lt=25, description="Size of the aggregation window in days"
     )
@@ -147,13 +202,17 @@ class EvaluationConfig(BaseModel):
 class ExperimentConfig(BaseModel):
     # should match with the one in the config.yml file
     dataset_dir: Path = Path(__file__).resolve().parents[2] / "dataset"
-    preprocessed_tabular_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "processed_tabular"
-    preprocessed_temporal_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "processed_temporal"
+    preprocessed_tabular_data_dir: Path = (
+        Path(__file__).resolve().parents[2] / "dataset" / "processed_tabular"
+    )
+    preprocessed_temporal_data_dir: Path = (
+        Path(__file__).resolve().parents[2] / "dataset" / "processed_temporal"
+    )
     raw_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "raw"
     temporary_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "temp"
     logging_dir: Path = Path(__file__).resolve().parents[2] / "logs"
     plots_dir: Path = Path(__file__).resolve().parents[2] / "plots"
-    
+
     experiment_name: str = Field(
         "default_experiment", description="Name of the experiment"
     )
@@ -182,8 +241,8 @@ class ExperimentConfig(BaseModel):
         self.temporary_data_dir.mkdir(parents=True, exist_ok=True)
         self.logging_dir.mkdir(parents=True, exist_ok=True)
         self.plots_dir.mkdir(parents=True, exist_ok=True)
-        
-        self.experiment_dir.mkdir(parents=True, exist_ok=True)  
+
+        self.experiment_dir.mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "logs").mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "models").mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "results").mkdir(parents=True, exist_ok=True)

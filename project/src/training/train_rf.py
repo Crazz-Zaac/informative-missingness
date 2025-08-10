@@ -1,4 +1,4 @@
-from sklearn.metrics import recall_score, f1_score, roc_auc_score
+from sklearn.metrics import recall_score, f1_score, roc_auc_score, precision_recall_curve, auc
 from sklearn.model_selection import StratifiedGroupKFold, GridSearchCV
 from imblearn.over_sampling import RandomOverSampler
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ class RandomForestTrainer:
         metrics_df.to_csv(f"{plot_dir}/fold_metrics_{timestamp}.csv", index=False)
 
     def run_training(self):
-        recalls, f1s, aucs = [], [], []
+        recalls, f1s, aucs, pr_aucs = [], [], [], []
         best_estimators = []
 
         logger.info("Loading and preparing the data...")
@@ -115,9 +115,11 @@ class RandomForestTrainer:
                 recalls.append(recall_score(y_test, y_pred, pos_label=1))
                 f1s.append(f1_score(y_test, y_pred, pos_label=1))
                 aucs.append(roc_auc_score(y_test, y_prob))
+                precision, recall, _ = precision_recall_curve(y_test, y_prob)
+                pr_aucs.append(auc(recall, precision))
 
                 logger.info(
-                    f"Recall: {recalls[-1]:.4f}, F1: {f1s[-1]:.4f}, ROC-AUC: {aucs[-1]:.4f}"
+                    f"Recall: {recalls[-1]:.4f}, F1: {f1s[-1]:.4f}, ROC-AUC: {aucs[-1]:.4f}, PR-AUC: {pr_aucs[-1]:.4f}"
                 )
 
 
@@ -141,7 +143,10 @@ class RandomForestTrainer:
                 f"Mean F1:     {pd.Series(f1s).mean():.4f} ± {pd.Series(f1s).std():.4f}"
             )
             logger.info(
-                f"Mean ROC-AUC:{pd.Series(aucs).mean():.4f} ± {pd.Series(aucs).std():.4f}"
+                f"Mean ROC-AUC: {pd.Series(aucs).mean():.4f} ± {pd.Series(aucs).std():.4f}"
+            )
+            logger.info(
+                f"Mean PR-AUC: {pd.Series(pr_aucs).mean():.4f} ± {pd.Series(pr_aucs).std():.4f}"
             )
 
             # Save best model from last fold (or optionally from best overall)

@@ -1,5 +1,4 @@
 from sklearn.ensemble import RandomForestClassifier
-from src.config.schemas import RandomForestFixedParams
 
 
 class RandomForestModel:
