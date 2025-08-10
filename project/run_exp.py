@@ -27,7 +27,7 @@ def main():
         config_data = yaml.safe_load(file)
     config = ExperimentConfig(**config_data)
 
-    setup_logging(config.logging)
+    setup_logging(config.logging, model_type=config.model.model_type)
 
     # Limit workers if needed
     max_workers = min(len(config.model.model_type), os.cpu_count() or 1)

@@ -173,30 +173,23 @@ class TemporalDataConfig(BaseModel):
 
 
 class DataConfig(BaseModel):
-    test_size: float
     tabular: TabularDataConfig
     temporal: TemporalDataConfig
-
-
-class TrainingConfig(BaseModel):
-    max_epochs: int = Field(10, gt=0, description="Maximum number of training epochs")
-    learning_rate: float = Field(
-        0.001, gt=0.0, description="Learning rate for the optimizer"
-    )
 
 
 class LoggingConfig(BaseModel):
     log_path: Path = Path(__file__).resolve().parents[2] / "logs"
     log_dir: Path = Field(log_path, description="Directory for log files")
-    expirement_id: str = Field(
+    experiment_id: str = Field(
         default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
     )
     log_level: LoggingLevelEnum
     log_format: str = "%(asctime)s - %(levelname)s - %(message)s"
 
-
-class EvaluationConfig(BaseModel):
-    metrics: List[MetricsEnum]
+    def get_log_filepath(self, model_type) -> Path:
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{model_type}_{timestamp_str}.log"
+        return self.log_dir / filename
 
 
 class ExperimentConfig(BaseModel):
@@ -226,9 +219,7 @@ class ExperimentConfig(BaseModel):
     )
     data: DataConfig
     model: ModelConfig
-    training: TrainingConfig
     logging: LoggingConfig
-    evaluation: EvaluationConfig
     save_best_model: bool = True
     save_model_every: Optional[int] = 1
     best_model_path: Optional[Path] = None

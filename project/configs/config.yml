@@ -1,7 +1,6 @@
 experiment_name: "informative_missingness"
 
 data:
-  test_size: 0.2 # proportion of data to be used for testing
   tabular:
     data_path: "../dataset/preprocessed_tabular/"
     training_data: "cohort1" # file name for tabular data
