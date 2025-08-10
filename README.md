@@ -15,6 +15,7 @@ project/
 ├── notebooks/                    # Jupyter notebooks for exploration and debugging
 ├── plots/                        # Stores performance plots and visualizations
 ├── scripts/                      # Scripts to prepare raw data by querying PostgreSQL
+│   └── fetch_demographics_data.py  # Script to fetch demographics data from DB and merge the target file
 │   └── fetch_labevents_data.py  # Script to fetch labevents data from DB
 ├── src/
 │   ├── config/
@@ -22,12 +23,15 @@ project/
 │   ├── data/                     # Data handling and preprocessing
 │   │   ├── data_loader.py        # Loads data from sources
 │   │   ├── dataset.py            # Dataset logic and split handling
-│   │   ├── tabular_preprocessing.py   # Tabular preprocessing methods
+│   │   ├── data_preprocessing.py   # Data preprocessing methods definition
+│   │   ├── tabular_data_preprocessor.py   # Tabular data preprocessing
 │   │   └── temporal_preprocessing.py  # Temporal feature engineering
-│   ├── model/
+│   ├── models/
 │   │   └── random_forest.py      # Random Forest model definition
+│   │   └── gradient_boosting.py      # Gradient Boosting model definition
 │   ├── training/
 │   │   └── train_rf.py           # Training logic for Random Forest
+│   │   └── train_gradboost.py           # Training logic for Random Forest
 │   └── utils/
 │       └── logging_utils.py      # Logging configuration and setup
 ```
@@ -35,7 +39,7 @@ project/
 #### Running the pipeline
 ```python
 cd project
-python run_train_rf.py
+python run_exp.py
 ```
 
 
