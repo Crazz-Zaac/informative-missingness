@@ -178,11 +178,12 @@ class DataConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    log_path: Path = Path(__file__).resolve().parents[2] / "logs"
-    log_dir: Path = Field(log_path, description="Directory for log files")
-    experiment_id: str = Field(
-        default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
-    )
+    # log_path: Path = Path(__file__).resolve().parents[2] / "logs"
+    log_dir: Path #= Field(log_path, description="Directory for log files")
+    experiment_id: str
+    # experiment_id: str = Field(
+    #     default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
+    # )
     log_level: LoggingLevelEnum
     log_format: str = "%(asctime)s - %(levelname)s - %(message)s"
 
@@ -232,7 +233,7 @@ class ExperimentConfig(BaseModel):
         self.temporary_data_dir.mkdir(parents=True, exist_ok=True)
         self.logging_dir.mkdir(parents=True, exist_ok=True)
         self.plots_dir.mkdir(parents=True, exist_ok=True)
-
+        
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "logs").mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "models").mkdir(parents=True, exist_ok=True)
@@ -240,12 +241,33 @@ class ExperimentConfig(BaseModel):
 
     @model_validator(mode="before")
     def set_defaults(cls, values):
-        exp_dir = Path(values.get("experiment_dir", "../outputs/experiments"))
-        exp_id = values.get("experiment_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
+        exp_dir = Path(values.get("experiment_dir"))
+        exp_id = values.get("experiment_id")
+        if exp_id is None:
+            exp_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+            values["experiment_id"] = exp_id
+            
+        exp_dir = exp_dir / exp_id
         values["experiment_dir"] = exp_dir
-        values["experiment_id"] = exp_id
-        if not exp_dir.exists():
-            exp_dir.mkdir(parents=True, exist_ok=True)
-        if values.get("save_best_model", True):
-            values["best_model_path"] = exp_dir / f"{exp_id}.pth"
+        
+        # subdirectories
+        logs_dir = exp_dir / "logs"
+        models_dir = exp_dir / "models"
+        results_dir = exp_dir / "results"
+        
+        # Ensure the experiment directory exists
+        for dir_path in (logs_dir, models_dir, results_dir):
+            if not dir_path.exists():
+                dir_path.mkdir(parents=True, exist_ok=True)
+        
+        # Point logging and model paths to the correct directories
+        logging_config = values.get("logging", {})
+        logging_config["log_dir"] = logs_dir
+        logging_config["experiment_id"] = exp_id
+        values["logging"] = logging_config
+        
+        if values.get("save_best_model_path", True):
+            values["best_model_path"] = models_dir / f"{exp_id}.pth"
+
         return values
+
