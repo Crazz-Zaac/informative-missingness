@@ -3,7 +3,7 @@
 ### 📁 Project Structure
 ```bash
 project/
-├── run_train_rf.py                # Main training script to train Random Forest model
+├── run_exp_rf.py                # Main training script to train models
 ├── configs/
 │   └── config.yml                 # Configuration for all the Machine Learning models
 ├── dataset/                       # Data loading & preprocessing

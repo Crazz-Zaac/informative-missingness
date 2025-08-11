@@ -178,43 +178,36 @@ class DataConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    # log_path: Path = Path(__file__).resolve().parents[2] / "logs"
-    log_dir: Path #= Field(log_path, description="Directory for log files")
-    experiment_id: str
-    # experiment_id: str = Field(
-    #     default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
-    # )
-    log_level: LoggingLevelEnum
+    log_dir: Path = Field(
+        default_factory=lambda: Path("logs")
+    )  # Relative to experiment_dir
+    experiment_id: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
+    )
+    log_level: LoggingLevelEnum = LoggingLevelEnum.INFO
     log_format: str = "%(asctime)s - %(levelname)s - %(message)s"
 
-    def get_log_filepath(self, model_type) -> Path:
-        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{model_type}_{timestamp_str}.log"
-        return self.log_dir / filename
+    def get_log_filepath(self, model_type: str) -> Path:
+        return self.log_dir / f"{model_type}_{self.experiment_id}.log"
 
 
 class ExperimentConfig(BaseModel):
-    # should match with the one in the config.yml file
-    dataset_dir: Path = Path(__file__).resolve().parents[2] / "dataset"
-    preprocessed_tabular_data_dir: Path = (
-        Path(__file__).resolve().parents[2] / "dataset" / "processed_tabular"
-    )
-    preprocessed_temporal_data_dir: Path = (
-        Path(__file__).resolve().parents[2] / "dataset" / "processed_temporal"
-    )
-    raw_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "raw"
-    temporary_data_dir: Path = Path(__file__).resolve().parents[2] / "dataset" / "temp"
-    logging_dir: Path = Path(__file__).resolve().parents[2] / "logs"
-    plots_dir: Path = Path(__file__).resolve().parents[2] / "plots"
+    # Get project root dynamically - this will be set from main script
+    project_root: Optional[Path] = None
+    
+    # These will be computed based on project_root
+    dataset_dir: Optional[Path] = None
+    preprocessed_tabular_data_dir: Optional[Path] = None
+    preprocessed_temporal_data_dir: Optional[Path] = None
+    raw_data_dir: Optional[Path] = None
+    temporary_data_dir: Optional[Path] = None
+    logging_dir: Optional[Path] = None
+    plots_dir: Optional[Path] = None
 
     experiment_name: str = Field(
         "default_experiment", description="Name of the experiment"
     )
-    experiment_dir: Path = Field(
-        default_factory=lambda: Path(__file__).resolve().parents[2]
-        / "outputs"
-        / "experiments"
-    )
+    experiment_dir: Optional[Path] = None
     experiment_id: str = Field(
         default_factory=lambda: datetime.now().strftime("%Y%m%d_%H%M%S")
     )
@@ -233,7 +226,7 @@ class ExperimentConfig(BaseModel):
         self.temporary_data_dir.mkdir(parents=True, exist_ok=True)
         self.logging_dir.mkdir(parents=True, exist_ok=True)
         self.plots_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "logs").mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "models").mkdir(parents=True, exist_ok=True)
@@ -241,33 +234,48 @@ class ExperimentConfig(BaseModel):
 
     @model_validator(mode="before")
     def set_defaults(cls, values):
-        exp_dir = Path(values.get("experiment_dir"))
+        # Set project_root if not provided
+        if values.get("project_root") is None:
+            # Default fallback - try to find project root
+            values["project_root"] = Path.cwd()
+
+        project_root = Path(values["project_root"])
+        
+        # Set all directory paths relative to project root
+        values["dataset_dir"] = project_root / "dataset"
+        values["preprocessed_tabular_data_dir"] = project_root / "dataset" / "processed_tabular"
+        values["preprocessed_temporal_data_dir"] = project_root / "dataset" / "processed_temporal"
+        values["raw_data_dir"] = project_root / "dataset" / "raw"
+        values["temporary_data_dir"] = project_root / "dataset" / "temp"
+        values["logging_dir"] = project_root / "logs"
+        values["plots_dir"] = project_root / "plots"
+
         exp_id = values.get("experiment_id")
         if exp_id is None:
             exp_id = datetime.now().strftime("%Y%m%d_%H%M%S")
             values["experiment_id"] = exp_id
-            
-        exp_dir = exp_dir / exp_id
+
+        # Set experiment directory within project
+        exp_dir = project_root / "outputs" / "experiments" / exp_id
         values["experiment_dir"] = exp_dir
-        
+
         # subdirectories
         logs_dir = exp_dir / "logs"
         models_dir = exp_dir / "models"
         results_dir = exp_dir / "results"
-        
+
         # Ensure the experiment directory exists
         for dir_path in (logs_dir, models_dir, results_dir):
             if not dir_path.exists():
                 dir_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Point logging and model paths to the correct directories
         logging_config = values.get("logging", {})
         logging_config["log_dir"] = logs_dir
         logging_config["experiment_id"] = exp_id
         values["logging"] = logging_config
-        
-        if values.get("save_best_model_path", True):
+
+        if values.get("save_best_model", True):
             values["best_model_path"] = models_dir / f"{exp_id}.pth"
 
         return values
-
