@@ -11,8 +11,13 @@ project/
 │   ├── raw/                      # Stores raw data before preprocessing
 │   └── temp/                     # Stores intermediate data (from PostgreSQL)
 ├── db_utils/                     # Configurations for the PostgreSQL database
-├── logs/                         # Stores logs for different ML models
 ├── notebooks/                    # Jupyter notebooks for exploration and debugging
+├── outputs/                      # output for all the experiments
+│   └── experiments
+│   │   ├── 20250811_222344         # This folder is created based on the date and time
+│   │   │   └── logs/               # Stores logs for different ML models
+│   │   │   └── models/             # logs models training parameters  
+│   │   │   └── results/            # stores models results
 ├── plots/                        # Stores performance plots and visualizations
 ├── scripts/                      # Scripts to prepare raw data by querying PostgreSQL
 │   └── fetch_demographics_data.py  # Script to fetch demographics data from DB and merge the target file
