@@ -54,7 +54,10 @@ python run_exp.py
 cd informative-missingness
 sbatch -p work train_rf.sbatch
 ```
-
+- Copying raw data files from local to remote
+```bash
+scp -r raw/aplasia_*.parquet csnhr.nhr.fau.de:informative-missingness/project/dataset/raw/
+```
 
 ##### Queries to load the `mimiciv` data
 - The `.sql` files in `/postgres` is copied from the [MIMIC Github Repository](https://github.com/MIT-LCP/mimic-code/tree/main/mimic-iv/buildmimic/postgres) 
