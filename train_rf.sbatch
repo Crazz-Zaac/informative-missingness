@@ -14,4 +14,4 @@ source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
 
 
 # Run Python script
-python project/run_train_rf.py
+python project/run_exp.py
