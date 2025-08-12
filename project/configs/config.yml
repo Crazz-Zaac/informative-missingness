@@ -71,7 +71,7 @@ model:
         max_depth: 5
         n_estimators: 200
         scale_pos_weight: 2
-        objective: binary:logistic
+        objective: [binary:logistic]
         eval_metric: logloss
       grid_search_params:
         learning_rate: [0.01, 0.1]

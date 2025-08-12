@@ -1,4 +1,10 @@
-from sklearn.metrics import recall_score, f1_score, roc_auc_score, precision_recall_curve, auc
+from sklearn.metrics import (
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    precision_recall_curve,
+    auc,
+)
 from sklearn.model_selection import StratifiedGroupKFold, GridSearchCV
 from imblearn.over_sampling import RandomOverSampler
 import matplotlib.pyplot as plt
@@ -22,11 +28,13 @@ class RandomForestTrainer:
         # since the hyperparameters is a class, we need to access it dynamically
         model_hyperparams = self.config.model.hyperparameters.RandomForest
         if model_hyperparams is None:
-            raise ValueError(f"No hyperparameters provided for model: {ModelTypeEnum.RF}")
-        
+            raise ValueError(
+                f"No hyperparameters provided for model: {ModelTypeEnum.RF}"
+            )
+
         self.rf_fixed_params = model_hyperparams.fixed_params
         self.rf_grid_search_params = model_hyperparams.grid_search_params
-        
+
         self.dataset = TabularDataset(
             window_size=self.config.data.tabular.window_size, config=self.config
         )
@@ -58,7 +66,7 @@ class RandomForestTrainer:
 
         logger.info("Loading and preparing the data...")
         X, y, groups = self.dataset.load_and_split_data()
-        
+
         sgkf = StratifiedGroupKFold(
             n_splits=5, shuffle=True, random_state=self.random_state
         )
@@ -77,10 +85,12 @@ class RandomForestTrainer:
 
                 X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
                 y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-                
+
                 # sampling data
                 logger.info("Balancing the training set using RandomOverSampler")
-                oversample = RandomOverSampler(sampling_strategy='minority', random_state=self.random_state)
+                oversample = RandomOverSampler(
+                    sampling_strategy="minority", random_state=self.random_state
+                )
                 X_train, y_train = oversample.fit_resample(X_train, y_train)
 
                 # Ensure consistent column names
@@ -89,6 +99,7 @@ class RandomForestTrainer:
 
                 # Grid Search with fixed and search parameters
                 base_model = self.model._initialize_model()
+                
                 logger.info("Running GridSearchCV...")
                 grid_search = GridSearchCV(
                     estimator=base_model,
@@ -103,10 +114,11 @@ class RandomForestTrainer:
                 best_model = grid_search.best_estimator_
                 best_estimators.append(best_model)
 
-                logger.info(f"Best hyperparameters from GridSearchCV (Fold {fold + 1}):")
+                logger.info(
+                    f"Best hyperparameters from GridSearchCV (Fold {fold + 1}):"
+                )
                 for key, val in grid_search.best_params_.items():
                     logger.info(f"  {key}: {val}")
-
 
                 # Evaluation
                 y_pred = best_model.predict(X_test)
@@ -122,7 +134,6 @@ class RandomForestTrainer:
                     f"Recall: {recalls[-1]:.4f}, F1: {f1s[-1]:.4f}, ROC-AUC: {aucs[-1]:.4f}, PR-AUC: {pr_aucs[-1]:.4f}"
                 )
 
-
             # Log model parameters
             logger.info("Logging fixed model hyperparameters:")
             for key, value in self.rf_fixed_params.items():
@@ -131,9 +142,7 @@ class RandomForestTrainer:
             for key, value in self.rf_grid_search_params.items():
                 logger.info(f"  {key}: {value}")
 
-            
-            # TODO: Record Area Under the Precison-Recall Curve (AUPRC)
-            
+        
             # Summary
             logger.info("\n=== Training Summary ===")
             logger.info(

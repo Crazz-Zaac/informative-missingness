@@ -71,7 +71,7 @@ class GradientBoostingTrainer:
                 # Handle class imbalance
                 logger.info("Handling class imbalance using RandomOverSampler...")
                 ros = RandomOverSampler(random_state=self.random_state)
-                X_train_resampled, y_train_resampled = ros.fit_resample(
+                X_train, y_train = ros.fit_resample(
                     X_train, y_train
                 )
 
@@ -79,7 +79,7 @@ class GradientBoostingTrainer:
                 X_val.columns = X_val.columns.astype(str)
 
                 # Grid search with fixed and search parameters
-                base_model = self.model.fit(X_train_resampled, y_train_resampled)
+                base_model = self.model._initialize_model()
 
                 logger.info("Running GridSearchCV...")
                 grid_search = GridSearchCV(
@@ -90,7 +90,7 @@ class GradientBoostingTrainer:
                     n_jobs=-1,
                     verbose=1,
                 )
-                grid_search.fit(X_train_resampled, y_train_resampled)
+                grid_search.fit(X_train, y_train)
 
                 best_model = grid_search.best_estimator_
                 best_estimators.append(best_model)
@@ -101,12 +101,12 @@ class GradientBoostingTrainer:
 
                 # Model evaluation
                 y_pred = grid_search.predict(X_val)
-                y_proba = grid_search.predict_proba(X_val)[:, 1]
+                y_prob = grid_search.predict_proba(X_val)[:, 1]
 
                 recalls.append(recall_score(y_val, y_pred, pos_label=1))
                 f1s.append(f1_score(y_val, y_pred, pos_label=1))
-                aucs.append(roc_auc_score(y_val, y_proba))
-                precision, recall, _ = precision_recall_curve(y_val, y_proba)
+                aucs.append(roc_auc_score(y_val, y_prob))
+                precision, recall, _ = precision_recall_curve(y_val, y_prob)
                 pr_aucs.append(auc(recall, precision))
 
                 logger.info(
