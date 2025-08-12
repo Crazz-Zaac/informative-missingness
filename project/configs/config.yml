@@ -9,7 +9,7 @@ data:
     feature_combinations: "m" # x, m, delta, x_delta, m_delta, x_m_delta
     feature_type: "numeric" # categorical, numeric
     aggregation_window_size: 12 # hours for aggregation
-    training_feature: "gender" # target, gender, race, anchor_age
+    training_feature: "target" # target, gender, race, anchor_age
     age_threshold: 30 # age threshold for training feature
     insurance_type: private # private or non-private
   temporal:
