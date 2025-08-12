@@ -1,4 +1,5 @@
 from skopt import BayesSearchCV
+from skopt.space import Real, Integer, Categorical
 from sklearn.model_selection import StratifiedKFold
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.metrics import (
@@ -33,7 +34,16 @@ class XGBoostTrainer:
             )
 
         self.xgb_fixed_params = model_hyperparams.fixed_params
-        self.xgb_bayes_search_params = model_hyperparams.grid_search_params
+
+        # Defining the search space for Bayesian optimization
+        raw_params = model_hyperparams.grid_search_params
+        self.xgb_bayes_search_params = {
+            "learning_rate": Real(*raw_params["learning_rate"], prior="log-uniform"),
+            "max_depth": Integer(*raw_params["max_depth"]),
+            "n_estimators": Integer(*raw_params["n_estimators"]),
+            "scale_pos_weight": Integer(*raw_params["scale_pos_weight"]),
+            "objective": Categorical(raw_params["objective"]),
+        }
 
         self.dataset = TabularDataset(
             window_size=self.config.data.tabular.window_size, config=self.config

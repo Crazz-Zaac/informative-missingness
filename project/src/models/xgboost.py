@@ -1,12 +1,11 @@
 from xgboost import XGBClassifier
 
 class XGBoostModel:
-
     def __init__(self, config):
         self.config = config
         self.model = self._initialize_model()
-    
-    def _initalize_model(self):
+
+    def _initialize_model(self):
         """Initialize the model with the given configurations"""
         return XGBClassifier(
             learning_rate = self.config.get("learning_rate"),
