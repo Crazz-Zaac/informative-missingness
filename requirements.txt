@@ -96,3 +96,4 @@ wandb==0.19.11
 wcwidth==0.2.13
 catboost==1.2.8
 xgboost==3.0.4
+scikit-optimize==0.10.2
