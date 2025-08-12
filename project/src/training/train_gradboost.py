@@ -14,7 +14,7 @@ import pandas as pd
 import yaml
 from loguru import logger
 
-from project.src.models.gradient_boosting import GradientBoostingModel
+from src.models.gradient_boosting import GradientBoostingModel
 from src.config.schemas import ExperimentConfig, ModelTypeEnum
 from src.data.dataset import TabularDataset
 
@@ -27,7 +27,7 @@ class GradientBoostingTrainer:
 
         if model_hyperparams is None:
             raise ValueError(
-                f"No hyperparameters provided for model: {ModelTypeEnum.GRADBOOST}"
+                f"No hyperparameters provided for model: {ModelTypeEnum.GradBoost}"
             )
 
         self.gradboost_fixed_params = model_hyperparams.fixed_params

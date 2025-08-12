@@ -39,6 +39,7 @@ project/
 │   │   └── train_gradboost.py           # Training logic for Random Forest
 │   └── utils/
 │       └── logging_utils.py      # Logging configuration and setup
+├── train_models.sbatch                # Script to assign model training process in HPC
 ```
 
 #### Running the pipeline
@@ -52,7 +53,7 @@ python run_exp.py
 - Clone the repo
 ```bash
 cd informative-missingness
-sbatch -p work train_rf.sbatch
+sbatch -p work train_models.sbatch
 ```
 - Copying raw data files from local to remote
 ```bash
