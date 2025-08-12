@@ -7,8 +7,6 @@ from sklearn.metrics import (
     auc,
 )
 from imblearn.over_sampling import RandomOverSampler
-import matplotlib.pyplot as plt
-import datetime
 from pathlib import Path
 import pandas as pd
 import yaml
@@ -45,6 +43,12 @@ class GradientBoostingTrainer:
         logger.info("Loading and preparing the data...")
         X, y, groups = self.dataset.load_and_split_data()
 
+        # check and remove NaNs
+        if X.isnull().sum().sum() > 0:
+            logger.info("Removing rows with NaN values...")
+            X = X.dropna()
+            y = y[X.index]
+
         logger.info("Starting training process...")
         skf = StratifiedGroupKFold(
             n_splits=5, shuffle=True, random_state=self.random_state
@@ -62,7 +66,8 @@ class GradientBoostingTrainer:
                 logger.info(f"Training fold {fold + 1}...")
                 X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
                 y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
-
+                
+                
                 # Handle class imbalance
                 logger.info("Handling class imbalance using RandomOverSampler...")
                 ros = RandomOverSampler(random_state=self.random_state)
@@ -80,7 +85,7 @@ class GradientBoostingTrainer:
                 grid_search = GridSearchCV(
                     estimator=base_model,
                     param_grid=self.gradboost_grid_search_params,
-                    cv=3,
+                    cv=5,
                     scoring="roc_auc",
                     n_jobs=-1,
                     verbose=1,
