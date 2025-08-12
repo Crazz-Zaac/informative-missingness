@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import datetime
 from pathlib import Path
 import pandas as pd
-from wandb import config
 import yaml
 from loguru import logger
 
