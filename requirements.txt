@@ -94,3 +94,5 @@ tzdata==2025.2
 urllib3==2.4.0
 wandb==0.19.11
 wcwidth==0.2.13
+catboost==1.2.8
+xgboost==3.0.4
