@@ -7,8 +7,10 @@ from sklearn.metrics import (
     auc,
 )
 from imblearn.over_sampling import RandomOverSampler
+from sklearn.impute import SimpleImputer
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import yaml
 from loguru import logger
 
@@ -42,12 +44,15 @@ class GradientBoostingTrainer:
 
         logger.info("Loading and preparing the data...")
         X, y, groups = self.dataset.load_and_split_data()
-
-        # check and remove NaNs
-        if X.isnull().sum().sum() > 0:
-            logger.info("Removing rows with NaN values...")
-            X = X.dropna()
-            y = y[X.index]
+        
+        if np.isnan(X.values).any():
+            logger.info("NaN values detected in X — applying imputation...")
+            imputer = SimpleImputer(strategy="mean")  # or median, most_frequent, constant
+            X = pd.DataFrame(
+                imputer.fit_transform(X),
+                columns=X.columns,
+                index=X.index
+            )
 
         logger.info("Starting training process...")
         skf = StratifiedGroupKFold(
