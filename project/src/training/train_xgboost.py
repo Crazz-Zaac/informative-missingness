@@ -38,11 +38,11 @@ class XGBoostTrainer:
         # Defining the search space for Bayesian optimization
         raw_params = model_hyperparams.grid_search_params
         self.xgb_bayes_search_params = {
-            "learning_rate": Real(*raw_params["learning_rate"], prior="log-uniform"),
-            "max_depth": Integer(*raw_params["max_depth"]),
-            "n_estimators": Integer(*raw_params["n_estimators"]),
-            "scale_pos_weight": Integer(*raw_params["scale_pos_weight"]),
-            "objective": Categorical(raw_params["objective"]),
+            "learning_rate": Real(raw_params["learning_rate"][0], raw_params["learning_rate"][1], prior="log-uniform"),
+            "max_depth": Integer(raw_params["max_depth"][0], raw_params["max_depth"][1]),
+            "n_estimators": Integer(raw_params["n_estimators"][0], raw_params["n_estimators"][2]),  # Note: using index 2 for the max (200)
+            "scale_pos_weight": Real(raw_params["scale_pos_weight"][0], raw_params["scale_pos_weight"][1], prior="uniform"),
+            "objective": Categorical(raw_params["objective"]),  # Don't unpack
         }
 
         self.dataset = TabularDataset(
