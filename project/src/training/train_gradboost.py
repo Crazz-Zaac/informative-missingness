@@ -92,7 +92,7 @@ class GradientBoostingTrainer:
                     param_grid=self.gradboost_grid_search_params,
                     cv=5,
                     scoring="roc_auc",
-                    n_jobs=-1,
+                    n_jobs=1,
                     verbose=1,
                 )
                 grid_search.fit(X_train, y_train)

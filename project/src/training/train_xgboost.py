@@ -105,7 +105,7 @@ class XGBoostTrainer:
                     n_iter=10,
                     cv=3,
                     scoring="f1",
-                    n_jobs=-1,
+                    n_jobs=1,
                     verbose=1,
                 )
                 bayes_search.fit(X_train, y_train)
