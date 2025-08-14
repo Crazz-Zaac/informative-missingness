@@ -102,8 +102,8 @@ class XGBoostTrainer:
                 bayes_search = BayesSearchCV(
                     estimator=base_model,
                     search_spaces=self.xgb_bayes_search_params,
-                    n_iter=50,
-                    cv=sgkf,
+                    n_iter=10,
+                    cv=3,
                     scoring="f1",
                     n_jobs=-1,
                     verbose=1,
