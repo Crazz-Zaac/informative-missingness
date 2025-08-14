@@ -12,6 +12,7 @@ class ModelTypeEnum(str, Enum):
     GradBoost = "GradientBoosting"
     LR = "LogisticRegression"
     XGBoost = "XGBoost"
+    CatBoost = "CatBoost"
 
 
 class MetricsEnum(str, Enum):
@@ -68,6 +69,30 @@ class GradBoostFixedParams(BaseModel):
 class GradBoostHyperParams(BaseModel):
     fixed_params: GradBoostFixedParams
     grid_search_params: Optional[GradBoostGridSearchParams] = None
+
+
+# CatBoost model hyperparameters
+class CatBoostGridSearchParams(BaseModel):
+    learning_rate: List[float]
+    depth: List[int]
+    iterations: List[int]
+    scale_pos_weight: List[float]
+    objective: List[str]
+    eval_metric: List[str]
+
+
+class CatBoostFixedParams(BaseModel):
+    learning_rate: float
+    depth: int
+    iterations: int
+    scale_pos_weight: float
+    objective: str
+    eval_metric: str
+
+
+class CatBoostHyperParams(BaseModel):
+    fixed_params: CatBoostFixedParams
+    grid_search_params: Optional[CatBoostGridSearchParams] = None
 
 
 # Logistic Regression model hyperparameters
@@ -194,7 +219,7 @@ class LoggingConfig(BaseModel):
 class ExperimentConfig(BaseModel):
     # Get project root dynamically - this will be set from main script
     project_root: Optional[Path] = None
-    
+
     # These will be computed based on project_root
     dataset_dir: Optional[Path] = None
     preprocessed_tabular_data_dir: Optional[Path] = None
@@ -240,11 +265,15 @@ class ExperimentConfig(BaseModel):
             values["project_root"] = Path.cwd()
 
         project_root = Path(values["project_root"])
-        
+
         # Set all directory paths relative to project root
         values["dataset_dir"] = project_root / "dataset"
-        values["preprocessed_tabular_data_dir"] = project_root / "dataset" / "processed_tabular"
-        values["preprocessed_temporal_data_dir"] = project_root / "dataset" / "processed_temporal"
+        values["preprocessed_tabular_data_dir"] = (
+            project_root / "dataset" / "processed_tabular"
+        )
+        values["preprocessed_temporal_data_dir"] = (
+            project_root / "dataset" / "processed_temporal"
+        )
         values["raw_data_dir"] = project_root / "dataset" / "raw"
         values["temporary_data_dir"] = project_root / "dataset" / "temp"
         values["logging_dir"] = project_root / "logs"

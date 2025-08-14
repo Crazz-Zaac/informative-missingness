@@ -16,7 +16,7 @@ data:
     data_path: "../dataset/preprocessed_temporal/"
 
 model:
-  model_type: ["XGBoost"] #, ["RandomForest", "GradientBoosting", "LogisticRegression", "XGBoost"] #, "LSTM", "LogisticRegression"
+  model_type: ["GradientBoosting"] #, ["RandomForest", "GradientBoosting", "LogisticRegression", "XGBoost", ""CatBoost""] 
   hyperparameters:
     # Random Forest model hyperparameters
     RandomForest:
@@ -79,6 +79,22 @@ model:
         n_estimators: [100, 150, 200]
         scale_pos_weight: [1, 2]
         objective: [binary:logistic]
+        #eval_metric: logloss
+    
+    CatBoost:
+      fixed_params:
+        learning_rate: 0.1
+        depth: 5
+        iterations: 200
+        scale_pos_weight: 2
+        objective: "Logloss"
+        eval_metric: "Logloss"
+      grid_search_params:
+        learning_rate: [0.01, 0.1]
+        depth: [3, 5]
+        iterations: [100, 150, 200]
+        scale_pos_weight: [1, 2]
+        objective: ["Logloss"]
         #eval_metric: logloss
 
 training:
