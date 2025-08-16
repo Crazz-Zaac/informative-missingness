@@ -93,8 +93,6 @@ class CatBoostTrainer:
                 final_model = CatBoostClassifier(
                     **self.fixed_params,
                     **best_params_fold,
-                    task_type="GPU",
-                    eval_metric="AUC",
                     custom_metric=["Precision", "Recall", "F1", "PRAUC"],
                 )
 
