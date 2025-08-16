@@ -237,18 +237,12 @@ Class_weight ({0:1, 1:2})
     - Training on: V, VMD, M, MD
 - TODO:
     - [X] Random oversampling/undersampling - GridSearch (classical model) - class weights {0:1, 1: 5} - imputation - transform (https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)
-
     - Feature importance
-
-
-### TODO:
 - Check and add script to generate cohort_with_demographic_data.parquet file 
 - Train Random Forest on Categorical data 
 - Train on different cohorts
 
 ### 2025-08-08
-#### TODO:
 - Extract the data for `mimic_iv_labs_apl_tr_14_days.csv`
-- Implement X-GBoost, Gradient Boost
-- Record Area Under the Precison-Recall Curve (AUPRC) value as well
-- 
+- Implement X-GBoost, Gradient Boost, CatBoost
+- Record Area Under the Precison-Recall Curve (AUPRC) value as well as 

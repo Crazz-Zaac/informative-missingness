@@ -34,9 +34,13 @@ project/
 │   ├── models/
 │   │   └── random_forest.py      # Random Forest model definition
 │   │   └── gradient_boosting.py      # Gradient Boosting model definition
+│   │   └── XGBoost.py      # XGBoost model definition
+│   │   └── CatBoost.py      # CatBoost model definition
 │   ├── training/
 │   │   └── train_rf.py           # Training logic for Random Forest
-│   │   └── train_gradboost.py           # Training logic for Random Forest
+│   │   └── train_gradboost.py           # Training logic for Gradient Boosting
+│   │   └── XGBoost.py           # Training logic for XGBoost
+│   │   └── CatBoost.py           # Training logic for CatBoost
 │   └── utils/
 │       └── logging_utils.py      # Logging configuration and setup
 ├── train_models.sbatch                # Script to assign model training process in HPC

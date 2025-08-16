@@ -56,13 +56,18 @@ model:
     # LogisticRegression model hyperparameters
     LogisticRegression:
       fixed_params:
-        penalty: "l2"
+        solver: saga     # fixed solver
+        penalty: l2
+        max_iter: 500
+        random_state: 42
         C: 1.0
-        solver: "liblinear"
+        l1_ratio: null
+
       grid_search_params:
-        penalty: ["l1", "l2"]
-        C: [0.1, 1.0, 10.0]
-        solver: ["liblinear"]
+        penalty: ["l1", "l2", "elasticnet"]   # all supported by saga
+        C: [0.01, 0.1, 1.0, 10.0]
+        l1_ratio: [0.0, 0.5, 1.0]
+
 
     # XGBoost model hyperparameters
     XGBoost:
