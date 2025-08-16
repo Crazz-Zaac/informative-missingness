@@ -250,8 +250,8 @@ class ExperimentConfig(BaseModel):
         self.preprocessed_tabular_data_dir.mkdir(parents=True, exist_ok=True)
         self.raw_data_dir.mkdir(parents=True, exist_ok=True)
         self.temporary_data_dir.mkdir(parents=True, exist_ok=True)
-        self.logging_dir.mkdir(parents=True, exist_ok=True)
-        self.plots_dir.mkdir(parents=True, exist_ok=True)
+        # self.logging_dir.mkdir(parents=True, exist_ok=True)
+        # self.plots_dir.mkdir(parents=True, exist_ok=True)
 
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "logs").mkdir(parents=True, exist_ok=True)

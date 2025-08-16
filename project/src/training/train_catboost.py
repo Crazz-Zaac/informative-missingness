@@ -45,7 +45,6 @@ class CatBoostTrainer:
     def run_training(self):
         recalls, f1_scores, aucs, pr_aucs = [], [], [], []
         best_estimators = []
-        best_params = []
 
         logger.info("Loading and preparing the data...")
         X, y, groups = self.dataset.load_and_split_data()
