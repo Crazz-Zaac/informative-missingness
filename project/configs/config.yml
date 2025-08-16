@@ -86,15 +86,16 @@ model:
         learning_rate: 0.1
         depth: 5
         iterations: 200
-        scale_pos_weight: 2
-        objective: "Logloss"
+        loss_function: Logloss 
         eval_metric: "Logloss"
+        l2_leaf_reg: 3
+        border_count: 32
       grid_search_params:
         learning_rate: [0.01, 0.1]
         depth: [3, 5]
         iterations: [100, 150, 200]
-        scale_pos_weight: [1, 2]
-        objective: ["Logloss"]
+        l2_leaf_reg: [3, 5, 7]
+        border_count: [32, 64, 128]
         #eval_metric: logloss
 
 training:

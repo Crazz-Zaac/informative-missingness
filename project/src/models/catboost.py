@@ -13,8 +13,9 @@ class CatBoostModel:
             learning_rate=self.config.get("learning_rate"),
             depth=self.config.get("depth"),
             iterations=self.config.get("iterations"),
-            scale_pos_weight=self.config.get("scale_pos_weight"),
-            objective=self.config.get("objective"),
+            loss_function=self.config.get("loss_function"),
+            l2_leaf_reg=self.config.get("l2_leaf_reg"),
+            border_count=self.config.get("border_count"),
             eval_metric=self.config.get("eval_metric"),
             task_type="GPU",
         )
