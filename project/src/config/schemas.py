@@ -147,6 +147,7 @@ class ModelHyperParams(BaseModel):
     GradientBoosting: Optional[HyperParams] = None
     LogisticRegression: Optional[HyperParams] = None
     XGBoost: Optional[HyperParams] = None
+    CatBoost: Optional[HyperParams] = None
 
 
 # A dictionary to map model types to their hyperparameters
@@ -276,8 +277,8 @@ class ExperimentConfig(BaseModel):
         )
         values["raw_data_dir"] = project_root / "dataset" / "raw"
         values["temporary_data_dir"] = project_root / "dataset" / "temp"
-        values["logging_dir"] = project_root / "logs"
-        values["plots_dir"] = project_root / "plots"
+        # values["logging_dir"] = project_root / "logs"
+        # values["plots_dir"] = project_root / "plots"
 
         exp_id = values.get("experiment_id")
         if exp_id is None:

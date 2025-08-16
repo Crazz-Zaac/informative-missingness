@@ -127,16 +127,16 @@ class GradientBoostingTrainer:
 
             # Summary
             logger.info("\n=== Training Summary ===")
-            logger.info(
+            logger.success(
                 f"Mean Recall: {pd.Series(recalls).mean():.4f} ± {pd.Series(recalls).std():.4f}"
             )
-            logger.info(
+            logger.success(
                 f"Mean F1:     {pd.Series(f1s).mean():.4f} ± {pd.Series(f1s).std():.4f}"
             )
-            logger.info(
+            logger.success(
                 f"Mean ROC-AUC: {pd.Series(aucs).mean():.4f} ± {pd.Series(aucs).std():.4f}"
             )
-            logger.info(
+            logger.success(
                 f"Mean PR-AUC: {pd.Series(pr_aucs).mean():.4f} ± {pd.Series(pr_aucs).std():.4f}"
             )
             # Save best model from last fold (or optionally from best overall)

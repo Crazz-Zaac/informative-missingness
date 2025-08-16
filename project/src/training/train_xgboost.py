@@ -71,12 +71,6 @@ class XGBoostTrainer:
 
         sgkf = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
 
-        logger.info("Fixed model hyperparameters:")
-        for key, value in self.xgb_fixed_params.items():
-            logger.info(f"  {key}: {value}")
-        logger.info("Grid search parameters to explore:")
-        for key, value in self.xgb_bayes_search_params.items():
-            logger.info(f"  {key}: {value}")
 
         try:
             for fold, (train_idx, test_idx) in enumerate(sgkf.split(X, y, groups)):
@@ -142,16 +136,16 @@ class XGBoostTrainer:
 
             # Summary
             logger.info("\n=== Training Summary ===")
-            logger.info(
+            logger.success(
                 f"Mean Recall: {pd.Series(recalls).mean():.4f} ± {pd.Series(recalls).std():.4f}"
             )
-            logger.info(
+            logger.success(
                 f"Mean F1:     {pd.Series(f1s).mean():.4f} ± {pd.Series(f1s).std():.4f}"
             )
-            logger.info(
+            logger.success(
                 f"Mean ROC-AUC: {pd.Series(aucs).mean():.4f} ± {pd.Series(aucs).std():.4f}"
             )
-            logger.info(
+            logger.success(
                 f"Mean PR-AUC: {pd.Series(pr_aucs).mean():.4f} ± {pd.Series(pr_aucs).std():.4f}"
             )
 
