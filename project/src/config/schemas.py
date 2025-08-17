@@ -250,8 +250,6 @@ class ExperimentConfig(BaseModel):
         self.preprocessed_tabular_data_dir.mkdir(parents=True, exist_ok=True)
         self.raw_data_dir.mkdir(parents=True, exist_ok=True)
         self.temporary_data_dir.mkdir(parents=True, exist_ok=True)
-        # self.logging_dir.mkdir(parents=True, exist_ok=True)
-        # self.plots_dir.mkdir(parents=True, exist_ok=True)
 
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         (self.experiment_dir / "logs").mkdir(parents=True, exist_ok=True)
@@ -270,15 +268,13 @@ class ExperimentConfig(BaseModel):
         # Set all directory paths relative to project root
         values["dataset_dir"] = project_root / "dataset"
         values["preprocessed_tabular_data_dir"] = (
-            project_root / "dataset" / "processed_tabular"
+            project_root / "dataset" / "preprocessed_tabular"
         )
         values["preprocessed_temporal_data_dir"] = (
-            project_root / "dataset" / "processed_temporal"
+            project_root / "dataset" / "preprocessed_temporal"
         )
         values["raw_data_dir"] = project_root / "dataset" / "raw"
         values["temporary_data_dir"] = project_root / "dataset" / "temp"
-        # values["logging_dir"] = project_root / "logs"
-        # values["plots_dir"] = project_root / "plots"
 
         exp_id = values.get("experiment_id")
         if exp_id is None:

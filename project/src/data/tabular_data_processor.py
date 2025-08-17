@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os
 import re
 from pathlib import Path
@@ -59,22 +60,73 @@ class TabularDataPreprocessor:
         else:
             return "Other"
 
-    def prepare_categorical_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Prepare categorical data by pivoting and creating binary features."""
-        data = data.copy()
-        data.loc[:, "has_measurement"] = 1
-        categorical_data = data.pivot_table(
-            index="hadm_id",
-            columns="feature_id",
-            values="has_measurement",
-            aggfunc="max",
-            fill_value=0,
+    def _compute_x_m_delta(self, df):
+
+        # --- Compute x and m ---
+        x_df = (
+            df.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+            .mean()
+            .unstack(level=-1)
+            .interpolate(method="linear", axis=1, limit_area="inside")
+            .ffill(axis=1)
+            .bfill(axis=1)
         )
-        categorical_data = categorical_data.sort_index(axis=1)
-        categorical_data.columns = pd.Index(
-            [col + "_measured" for col in categorical_data.columns]
+
+        m_df = (
+            df.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+            .count()
+            .unstack(level=-1)
+            .notna()
+            .astype(int)
         )
-        return categorical_data
+
+        # --- Sort columns (bins) ---
+        x_df = x_df.sort_index(axis=1)
+        m_df = m_df.sort_index(axis=1)
+        timestamps = (
+            x_df.columns.values * self.aggregation_window_size
+        )  # hourly aggregation
+
+        # --- Compute delta only if needed ---
+        delta = None
+        if "delta" in self.feature_combinations:
+            delta = np.zeros_like(x_df.values)
+            for t in range(1, x_df.shape[1]):
+                time_gap = timestamps[t] - timestamps[t - 1]
+                delta[:, t] = np.where(
+                    m_df.values[:, t - 1] == 0, time_gap + delta[:, t - 1], time_gap
+                )
+
+        # ---  Prepare mapping ---
+        mapping = {"x": x_df.values, "m": m_df.values, "delta": delta}
+
+        # --- 7. Stack according to feature_combinations ---
+        components = self.feature_combinations.split("_")
+        stacked = np.vstack([mapping[c] for c in components if mapping[c] is not None])
+        stacked_list = []
+        stacked_index = []
+        # Iterate over each feature component
+        for feature in components:
+            df_feature = mapping[feature]
+            if df_feature is None:
+                continue
+            # Append feature values and index to the respective lists
+            stacked_list.append(df_feature.values)
+            stacked_index.extend(
+                [(hadm_id, itemid, feature) for hadm_id, itemid in df_feature.index]
+            )
+        # Concatenate all stacked features
+        stacked_array = np.vstack(stacked_list)
+        # Create DataFrame with MultiIndex
+        stacked_df = pd.DataFrame(
+            stacked_array,
+            index=pd.MultiIndex.from_tuples(
+                stacked_index, names=["hadm_id", "itemid", "feature"]
+            ),
+            columns=x_df.columns,
+        )
+
+        return stacked_df
 
     def preprocess_and_save(self, input_filename: str):
         """Process a single file and save results"""
@@ -159,41 +211,8 @@ class TabularDataPreprocessor:
             + patients_data["bin"].astype(str)
         )
 
-        if self.feature_combinations == "x":
-            # Pivot the data to create a time series format
-
-            df_ts = (
-                patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
-                .mean()
-                .unstack(level=-1)  # unstack 'bin' to columns
-                .interpolate(
-                    method="linear", axis=1, limit_area="inside"
-                )  # interpolate between observed values
-                .ffill(axis=1)  # forward fill missing after last measurement
-                .bfill(axis=1)  # backward fill missing before first measurement
-                .reset_index()  # reset index to have 'hadm_id' as a column
-            )
-
-        # if the feature_combinations is m, create binary features for missingness
-        elif self.feature_combinations == "m":
-            # Create binary features for missingness
-            logger.info("Creating binary features for missingness")
-            try:
-                df_ts = (
-                    patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
-                    .count()
-                    .unstack(level=-1)
-                    .notna()
-                    .astype(int)  # Convert to binary (0/1)
-                    .reset_index()
-                )
-            except Exception as e:
-                logger.error(
-                    f"Error occurred while creating binary features for missingness. {e}"
-                )
-
-        # Set index on hadm_id and itemid
-        df_ts = df_ts.set_index(["hadm_id", "itemid"])
+        # Compute feature combinations 
+        df_ts = self._compute_x_m_delta(patients_data)
 
         # Unstack 'itemid' to get one row per admission with multiple lab*time columns
         df_mx = df_ts.unstack(level=-1)
@@ -233,34 +252,6 @@ class TabularDataPreprocessor:
 
         # Return the output filenames
         return df_mx, target_data, groups
-
-        # if self.feature_type == "numeric":
-        #     logger.info("Processing numeric data")
-        #     processed_numeric_data = self.prepare_numeric_data(patients_data)
-        #     # Merge and save
-        #     numeric_output = f"{base_name}_numeric.parquet"
-        #     # Save files
-        #     processed_numeric_data.to_parquet(
-        #         os.path.join(self.preprocessed_data_dir, numeric_output), index=False
-        #     )
-        #     # log statistics of the numeric data
-        #     logger.info(f"Numeric data shape: {processed_numeric_data.shape}")
-
-        #     # Return the output filenames
-        #     return processed_numeric_data
-
-        # if self.feature_type == "categorical":
-        #     logger.info("Processing categorical data")
-        #     categorical_data = self.prepare_categorical_data(patients_data)
-        #     processed_categorical_data = categorical_data.join(targets).reset_index()
-        #     categorical_output = f"{base_name}_categorical.parquet"
-        #     processed_categorical_data.to_parquet(
-        #         os.path.join(self.preprocessed_data_dir, categorical_output),
-        #         index=False,
-        #     )
-        #     logger.info(f"Categorical data shape: {processed_categorical_data.shape}")
-        #     return processed_categorical_data
-
 
     def process_training_data_file(self):
         pattern = (

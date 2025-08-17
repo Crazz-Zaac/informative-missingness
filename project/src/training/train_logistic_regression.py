@@ -1,5 +1,6 @@
 from pathlib import Path
 from loguru import logger
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import StratifiedGroupKFold, GridSearchCV
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.metrics import (
@@ -12,6 +13,7 @@ from sklearn.metrics import (
 
 import pandas as pd
 import yaml
+import numpy as np
 
 from src.data.dataset import TabularDataset
 from src.models.logistic_regression import LogisticRegressionModel
@@ -43,9 +45,17 @@ class LogisticRegressionTrainer:
 
         logger.info("Loading and preparing the data...")
         X, y, groups = self.dataset.load_and_split_data()
+        if np.isnan(X.values).any():
+            logger.info("NaN values detected in X — applying imputation...")
+            imputer = SimpleImputer(strategy="mean")  # or median, most_frequent, constant
+            X = pd.DataFrame(
+                imputer.fit_transform(X),
+                columns=X.columns,
+                index=X.index
+            )
 
         sgkf = StratifiedGroupKFold(
-            n_splits=5, shuffle=True, random_state=self.random_state
+            n_splits=5, shuffle=True, random_state=42
         )
 
         try:
