@@ -58,13 +58,6 @@ class CatBoostTrainer:
                 X_train, X_test = X.iloc[train_idx].copy(), X.iloc[test_idx].copy()
                 y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
-                # sampling the data
-                logger.info("Applying Random Over Sampling...")
-                oversample = RandomOverSampler(
-                    sampling_strategy="minority", random_state=42
-                )
-                X_train, y_train = oversample.fit_resample(X_train, y_train)
-
                 X_train.columns = X_train.columns.astype(str)
                 X_test.columns = X_test.columns.astype(str)
 
@@ -89,10 +82,13 @@ class CatBoostTrainer:
                 )
                 for key, val in best_params_fold.items():
                     logger.info(f"  {key}: {val}")
+                
+                pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
 
                 final_model = CatBoostClassifier(
                     **self.fixed_params,
                     **best_params_fold,
+                    scale_pos_weight=pos_weight,
                     custom_metric=["Precision", "Recall", "F1", "PRAUC"],
                 )
 

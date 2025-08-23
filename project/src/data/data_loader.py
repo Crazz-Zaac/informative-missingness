@@ -20,5 +20,5 @@ def load_config(config_path: str) -> ExperimentConfig:
 
     config = ExperimentConfig(**config_data)
     config.create_dirs()
-    print(f"✅ Loaded config from: {config_path}")
+    print(f"Loaded config from: {config_path}")
     return config

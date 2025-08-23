@@ -61,7 +61,6 @@ class TabularDataPreprocessor:
             return "Other"
 
     def _compute_x_m_delta(self, df):
-
         # --- Compute x and m ---
         x_df = (
             df.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
@@ -80,53 +79,76 @@ class TabularDataPreprocessor:
             .astype(int)
         )
 
-        # --- Sort columns (bins) ---
+        # Ensure columns are sorted and of consistent type
+        # Convert column names to integers if they aren't already
+        x_df.columns = x_df.columns.astype(int)
+        m_df.columns = m_df.columns.astype(int)
+        
+        # Sort columns
         x_df = x_df.sort_index(axis=1)
         m_df = m_df.sort_index(axis=1)
-        timestamps = (
-            x_df.columns.values * self.aggregation_window_size
-        )  # hourly aggregation
+        
+        # Ensure both dataframes have the same columns
+        common_cols = x_df.columns.intersection(m_df.columns)
+        x_df = x_df[common_cols]
+        m_df = m_df[common_cols]
+        
+        timestamps = x_df.columns.values * self.aggregation_window_size
 
-        # --- Compute delta only if needed ---
-        delta = None
+        # --- Compute delta ---
+        delta_df = None
         if "delta" in self.feature_combinations:
-            delta = np.zeros_like(x_df.values)
+            delta_array = np.zeros_like(x_df.values)
             for t in range(1, x_df.shape[1]):
                 time_gap = timestamps[t] - timestamps[t - 1]
-                delta[:, t] = np.where(
-                    m_df.values[:, t - 1] == 0, time_gap + delta[:, t - 1], time_gap
+                delta_array[:, t] = np.where(
+                    m_df.values[:, t - 1] == 0, time_gap + delta_array[:, t - 1], time_gap
                 )
+            delta_df = pd.DataFrame(
+                delta_array, index=x_df.index, columns=x_df.columns
+            )
 
-        # ---  Prepare mapping ---
-        mapping = {"x": x_df.values, "m": m_df.values, "delta": delta}
+        # --- Prepare mapping (keep as DataFrames) ---
+        mapping = {"x": x_df, "m": m_df, "delta": delta_df}
 
-        # --- 7. Stack according to feature_combinations ---
+        # --- Stack according to feature_combinations ---
         components = self.feature_combinations.split("_")
-        stacked = np.vstack([mapping[c] for c in components if mapping[c] is not None])
         stacked_list = []
-        stacked_index = []
-        # Iterate over each feature component
+        stacked_indices = []
+
+        # Iterate over feature components
         for feature in components:
             df_feature = mapping[feature]
             if df_feature is None:
                 continue
-            # Append feature values and index to the respective lists
-            stacked_list.append(df_feature.values)
-            stacked_index.extend(
-                [(hadm_id, itemid, feature) for hadm_id, itemid in df_feature.index]
-            )
-        # Concatenate all stacked features
+            
+            # Reset index to get hadm_id and itemid as columns
+            df_reset = df_feature.reset_index()
+            
+            # Create tuples for the MultiIndex
+            for _, row in df_reset.iterrows():
+                hadm_id = row['hadm_id']
+                itemid = row['itemid']
+                stacked_indices.append((hadm_id, itemid, feature))
+            
+            # Append feature values (excluding hadm_id and itemid columns)
+            feature_values = df_reset.drop(['hadm_id', 'itemid'], axis=1).values
+            stacked_list.append(feature_values)
+
+        # Stack features vertically
         stacked_array = np.vstack(stacked_list)
-        # Create DataFrame with MultiIndex
+
+        # --- Return DataFrame with MultiIndex ---
         stacked_df = pd.DataFrame(
             stacked_array,
             index=pd.MultiIndex.from_tuples(
-                stacked_index, names=["hadm_id", "itemid", "feature"]
+                stacked_indices, names=["hadm_id", "itemid", "feature"]
             ),
-            columns=x_df.columns,
+            columns=x_df.columns,  # These are now consistent integer types
         )
 
         return stacked_df
+
 
     def preprocess_and_save(self, input_filename: str):
         """Process a single file and save results"""
@@ -210,8 +232,7 @@ class TabularDataPreprocessor:
             + "_"
             + patients_data["bin"].astype(str)
         )
-
-        # Compute feature combinations 
+        logger.info("Compute feature combinations")
         df_ts = self._compute_x_m_delta(patients_data)
 
         # Unstack 'itemid' to get one row per admission with multiple lab*time columns
