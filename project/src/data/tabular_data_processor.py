@@ -62,7 +62,7 @@ class TabularDataPreprocessor:
 
     def _compute_x_m_delta(self, patients_data, feature_combinations):
 
-        # Calculate x_df (mean values)
+        # Average values within each bin: x
         x_df = (
             patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .mean()
@@ -73,7 +73,7 @@ class TabularDataPreprocessor:
             .bfill(axis=1)
         )
 
-        # Calculate m_df (count/indicator values)
+        # 1 if data is present, else 0: m
         m_df = (
             patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .count()
@@ -88,9 +88,10 @@ class TabularDataPreprocessor:
         delta = np.zeros_like(m, dtype=float)
         delta[:, 0] = 1 - m[:, 0]
 
+        # Calculate the cumulative product for delta
         for t in range(1, m.shape[1]):
             delta[:, t] = m[:, t] * 0 + (1 - m[:, t]) * (1 + delta[:, t - 1])
-
+        # Normalize delta
         delta = delta / m.shape[1]
 
         delta_df = pd.DataFrame(
