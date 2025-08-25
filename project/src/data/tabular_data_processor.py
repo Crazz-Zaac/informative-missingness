@@ -60,95 +60,63 @@ class TabularDataPreprocessor:
         else:
             return "Other"
 
-    def _compute_x_m_delta(self, df):
-        # --- Compute x and m ---
+    def _compute_x_m_delta(self, patients_data, feature_combinations):
+
+        # Calculate x_df (mean values)
         x_df = (
-            df.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+            patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .mean()
             .unstack(level=-1)
+            .rename(columns=lambda c: f"x_bin{c}")
             .interpolate(method="linear", axis=1, limit_area="inside")
             .ffill(axis=1)
             .bfill(axis=1)
         )
 
+        # Calculate m_df (count/indicator values)
         m_df = (
-            df.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+            patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .count()
             .unstack(level=-1)
+            .rename(columns=lambda c: f"m_bin{c}")
             .notna()
             .astype(int)
         )
 
-        # Ensure columns are sorted and of consistent type
-        # Convert column names to integers if they aren't already
-        x_df.columns = x_df.columns.astype(int)
-        m_df.columns = m_df.columns.astype(int)
-        
-        # Sort columns
-        x_df = x_df.sort_index(axis=1)
-        m_df = m_df.sort_index(axis=1)
-        
-        # Ensure both dataframes have the same columns
-        common_cols = x_df.columns.intersection(m_df.columns)
-        x_df = x_df[common_cols]
-        m_df = m_df[common_cols]
-        
-        timestamps = x_df.columns.values * self.aggregation_window_size
+        # Calculate delta values
+        m = m_df.values
+        delta = np.zeros_like(m, dtype=float)
+        delta[:, 0] = 1 - m[:, 0]
 
-        # --- Compute delta ---
-        delta_df = None
-        if "delta" in self.feature_combinations:
-            delta_array = np.zeros_like(x_df.values)
-            for t in range(1, x_df.shape[1]):
-                time_gap = timestamps[t] - timestamps[t - 1]
-                delta_array[:, t] = np.where(
-                    m_df.values[:, t - 1] == 0, time_gap + delta_array[:, t - 1], time_gap
-                )
-            delta_df = pd.DataFrame(
-                delta_array, index=x_df.index, columns=x_df.columns
-            )
+        for t in range(1, m.shape[1]):
+            delta[:, t] = m[:, t] * 0 + (1 - m[:, t]) * (1 + delta[:, t - 1])
 
-        # --- Prepare mapping (keep as DataFrames) ---
-        mapping = {"x": x_df, "m": m_df, "delta": delta_df}
+        delta = delta / m.shape[1]
 
-        # --- Stack according to feature_combinations ---
-        components = self.feature_combinations.split("_")
-        stacked_list = []
-        stacked_indices = []
-
-        # Iterate over feature components
-        for feature in components:
-            df_feature = mapping[feature]
-            if df_feature is None:
-                continue
-            
-            # Reset index to get hadm_id and itemid as columns
-            df_reset = df_feature.reset_index()
-            
-            # Create tuples for the MultiIndex
-            for _, row in df_reset.iterrows():
-                hadm_id = row['hadm_id']
-                itemid = row['itemid']
-                stacked_indices.append((hadm_id, itemid, feature))
-            
-            # Append feature values (excluding hadm_id and itemid columns)
-            feature_values = df_reset.drop(['hadm_id', 'itemid'], axis=1).values
-            stacked_list.append(feature_values)
-
-        # Stack features vertically
-        stacked_array = np.vstack(stacked_list)
-
-        # --- Return DataFrame with MultiIndex ---
-        stacked_df = pd.DataFrame(
-            stacked_array,
-            index=pd.MultiIndex.from_tuples(
-                stacked_indices, names=["hadm_id", "itemid", "feature"]
-            ),
-            columns=x_df.columns,  # These are now consistent integer types
+        delta_df = pd.DataFrame(
+            delta,
+            index=m_df.index,
+            columns=[c.replace("m_bin", "delta_bin") for c in m_df.columns],
         )
 
-        return stacked_df
-
+        # Return the requested feature combination
+        if feature_combinations == "x":
+            return x_df
+        elif feature_combinations == "m":
+            return m_df
+        elif feature_combinations == "delta":
+            return delta_df
+        elif feature_combinations == "x_delta":
+            return pd.concat([x_df, delta_df], axis=1)
+        elif feature_combinations == "m_delta":
+            return pd.concat([m_df, delta_df], axis=1)
+        elif feature_combinations == "x_m_delta":
+            return pd.concat([x_df, m_df, delta_df], axis=1)
+        else:
+            raise ValueError(
+                f"Invalid feature_combinations: {feature_combinations}. "
+                "Must be one of: 'x', 'm', 'delta', 'x_delta', 'm_delta', 'x_m_delta'"
+            )
 
     def preprocess_and_save(self, input_filename: str):
         """Process a single file and save results"""
@@ -232,6 +200,8 @@ class TabularDataPreprocessor:
             + "_"
             + patients_data["bin"].astype(str)
         )
+
+        # prepare dataframe based on feature combinations
         logger.info("Compute feature combinations")
         df_ts = self._compute_x_m_delta(patients_data)
 
