@@ -11,6 +11,7 @@ from sklearn.metrics import (
 )
 
 import pandas as pd
+import numpy as np
 import yaml
 from loguru import logger
 from pathlib import Path
@@ -138,7 +139,7 @@ class CatBoostTrainer:
         except Exception as e:
             logger.exception(f"Experiment failed due to an unexpected error {e}.")
         finally:
-            logger.success("Experiment finished.")
+            logger.success("Experiment completed.")
 
     @classmethod
     def from_yaml(cls, config_path: Path):

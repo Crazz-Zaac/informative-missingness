@@ -60,13 +60,12 @@ class TabularDataPreprocessor:
         else:
             return "Other"
 
-    def _compute_x_m_delta(self, patients_data, feature_combinations):
-
+    def _compute_x_m_delta(self, patients_data):
         # Average values within each bin: x
         x_df = (
             patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .mean()
-            .unstack(level=-1)
+            .unstack(level=["itemid", "bin"])
             .rename(columns=lambda c: f"x_bin{c}")
             .interpolate(method="linear", axis=1, limit_area="inside")
             .ffill(axis=1)
@@ -77,45 +76,54 @@ class TabularDataPreprocessor:
         m_df = (
             patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .count()
-            .unstack(level=-1)
+            .unstack(level=["itemid", "bin"])
             .rename(columns=lambda c: f"m_bin{c}")
             .notna()
             .astype(int)
         )
 
-        # Calculate delta values
-        m = m_df.values
-        delta = np.zeros_like(m, dtype=float)
-        delta[:, 0] = 1 - m[:, 0]
+        m_values = (
+            patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
+            .count()
+            .unstack(level=["itemid", "bin"])
+            .notna()
+            .astype(int)
+        )
 
-        # Calculate the cumulative product for delta
-        for t in range(1, m.shape[1]):
-            delta[:, t] = m[:, t] * 0 + (1 - m[:, t]) * (1 + delta[:, t - 1])
-        # Normalize delta
-        delta = delta / m.shape[1]
+        # Calculate delta for each admission
+        delta = np.zeros_like(m_values.values, dtype=float)
+        delta[:, 0] = 1 - m_values.values[:, 0]
 
+        for t in range(1, m_values.shape[1]):
+            delta[:, t] = m_values.values[:, t] * 0 + (1 - m_values.values[:, t]) * (
+                1 + delta[:, t - 1]
+            )
+
+        delta = delta / m_values.shape[1]
+
+        # Create delta DataFrame with proper column names
         delta_df = pd.DataFrame(
             delta,
-            index=m_df.index,
-            columns=[c.replace("m_bin", "delta_bin") for c in m_df.columns],
+            index=m_values.index,
+            columns=[f"item{col[0]}_delta_bin{col[1]}" for col in m_values.columns],
         )
 
         # Return the requested feature combination
-        if feature_combinations == "x":
+        if self.feature_combinations == "x":
             return x_df
-        elif feature_combinations == "m":
+        elif self.feature_combinations == "m":
             return m_df
-        elif feature_combinations == "delta":
+        elif self.feature_combinations == "delta":
             return delta_df
-        elif feature_combinations == "x_delta":
+        elif self.feature_combinations == "x_delta":
             return pd.concat([x_df, delta_df], axis=1)
-        elif feature_combinations == "m_delta":
+        elif self.feature_combinations == "m_delta":
             return pd.concat([m_df, delta_df], axis=1)
-        elif feature_combinations == "x_m_delta":
+        elif self.feature_combinations == "x_m_delta":
             return pd.concat([x_df, m_df, delta_df], axis=1)
         else:
             raise ValueError(
-                f"Invalid feature_combinations: {feature_combinations}. "
+                f"Invalid feature_combinations: {self.feature_combinations}. "
                 "Must be one of: 'x', 'm', 'delta', 'x_delta', 'm_delta', 'x_m_delta'"
             )
 
@@ -204,46 +212,46 @@ class TabularDataPreprocessor:
 
         # prepare dataframe based on feature combinations
         logger.info("Compute feature combinations")
-        df_ts = self._compute_x_m_delta(patients_data)
+        df_ts = self._compute_x_m_delta(patients_data=patients_data)
 
         # Unstack 'itemid' to get one row per admission with multiple lab*time columns
-        df_mx = df_ts.unstack(level=-1)
+        # df_mx = df_ts.unstack(level=-1)
 
-        # Swap levels of MultiIndex columns so that time bins are outer level and itemid inner level
-        if isinstance(df_mx.columns, pd.MultiIndex):
-            df_mx.columns = df_mx.columns.swaplevel(0, 1)
+        # # Swap levels of MultiIndex columns so that time bins are outer level and itemid inner level
+        # if isinstance(df_mx.columns, pd.MultiIndex):
+        #     df_mx.columns = df_mx.columns.swaplevel(0, 1)
 
-        # Sort columns lexically
-        df_mx = df_mx.sort_index(axis=1)
+        # # Sort columns lexically
+        # df_mx = df_mx.sort_index(axis=1)
 
-        # Flatten MultiIndex columns to strings like 'bin_itemid'
-        df_mx.columns = [
-            "_".join(map(str, col)) if isinstance(col, tuple) else str(col)
-            for col in df_mx.columns
-        ]
+        # # Flatten MultiIndex columns to strings like 'bin_itemid'
+        # df_mx.columns = [
+        #     "_".join(map(str, col)) if isinstance(col, tuple) else str(col)
+        #     for col in df_mx.columns
+        # ]
 
         # setting hadm_id as index and reindexing training feature data
         target_data = cohort_data.set_index("hadm_id")[self.training_feature].reindex(
-            df_mx.index
+            df_ts.index
         )
 
         groups = (
-            cohort_data.set_index("hadm_id").reindex(df_mx.index)["subject_id"].values
+            cohort_data.set_index("hadm_id").reindex(df_ts.index)["subject_id"].values
         )
 
         # Generate output filenames
         base_name = os.path.splitext(input_filename)[0]  # removes .parquet
         file_saved_to = f"{base_name}_{self.training_feature}.parquet"
-        df_mx.to_parquet(
+        df_ts.to_parquet(
             os.path.join(self.preprocessed_data_dir, file_saved_to), index=False
         )
+        logger.info(f"Training Data: {self.feature_combinations} - Data shape: {df_ts.shape}")
         logger.info(
             f"Data prepared for {self.training_feature} and saved to {file_saved_to}"
         )
-        logger.info(f"Data shape: {df_mx.shape}")
 
         # Return the output filenames
-        return df_mx, target_data, groups
+        return df_ts, target_data, groups
 
     def process_training_data_file(self):
         pattern = (
