@@ -63,7 +63,7 @@ raw_output_dir = Path(__file__).resolve().parents[1] / "dataset" / "raw"
 temp_dir.mkdir(exist_ok=True)
 raw_output_dir.mkdir(exist_ok=True)
 
-# naming the file
+# File names
 demographics_file = "aplasia_with_demographics_data.parquet"
 output_file_name = "aplasia_lab_events_data_with_demographics.parquet"
 seven_days_file = "aplasia_lab_events_data_7_days_prior.parquet"
@@ -105,6 +105,7 @@ def fetch_batch(args):
     # Convert to string format for SQL
     id_tuple_str = ",".join([f"({sid},{hid})" for sid, hid in id_tuples])
 
+    # Construct SQL query for lab events
     query = f"""
         SELECT DISTINCT
             le.subject_id, 
@@ -115,7 +116,7 @@ def fetch_batch(args):
         FROM mimiciv_hosp.labevents le
         WHERE (le.subject_id, le.hadm_id) IN ({id_tuple_str})
     """
-
+    
     df = pd.read_sql(text(query), engine)
     logger.info(f"Batch {batch_idx} fetched with {len(df)} lab event records.")
     
