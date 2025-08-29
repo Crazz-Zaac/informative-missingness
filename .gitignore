@@ -179,7 +179,8 @@ mimiciv/
 postgres_data/
 
 .myenv/
-*.parquet
+preprocessed_tabular/
+raw/
 logs/
 artifacts/
 temp/
