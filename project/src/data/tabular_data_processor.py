@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import List
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 from loguru import logger
 from .data_preprocessing import TabularPreprocessingConfig
 
@@ -144,7 +145,8 @@ class TabularDataPreprocessor:
         if self.training_feature == "race":
             if "race" in patients_data.columns:
                 logger.info("Mapping race to numerical values")
-                race_encoder = LabelEncoder()
+                # using OneHotEncoder for multiclass
+                race_encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
                 patients_data["race"] = patients_data["race"].apply(self.map_race)
                 patients_data["race"] = race_encoder.fit_transform(
                     patients_data["race"]
