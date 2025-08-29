@@ -1,0 +1,28 @@
+@startuml
+start
+
+:Extract Data;
+:Raw Data Storage;
+
+:Preprocess Data;
+
+:Tabular Processing;
+
+:Feature Engineering;
+
+:Train Models;
+fork
+  :XGBoost;
+fork again
+  :CatBoost;
+fork again
+  :Random Forest;
+fork again
+  :Logistic Regression;
+end fork
+
+:Evaluate Models;
+:Store Results (outputs/experiments);
+
+stop
+@enduml
