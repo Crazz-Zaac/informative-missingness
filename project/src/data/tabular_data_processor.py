@@ -213,6 +213,9 @@ class TabularDataPreprocessor:
         # prepare dataframe based on feature combinations
         logger.info("Compute feature combinations")
         df_ts = self._compute_x_m_delta(patients_data=patients_data)
+        
+        # flattening the column and removing the multiIndex columns
+        df_ts.columns = ["_".join(map(str, col)) if isinstance(col, tuple) else col for col in df_ts.columns]
 
         # Unstack 'itemid' to get one row per admission with multiple lab*time columns
         # df_mx = df_ts.unstack(level=-1)
