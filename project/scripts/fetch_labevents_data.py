@@ -63,7 +63,7 @@ raw_output_dir = Path(__file__).resolve().parents[1] / "dataset" / "raw"
 temp_dir.mkdir(exist_ok=True)
 raw_output_dir.mkdir(exist_ok=True)
 
-
+# naming the file
 demographics_file = "aplasia_with_demographics_data.parquet"
 output_file_name = "aplasia_lab_events_data_with_demographics.parquet"
 seven_days_file = "aplasia_lab_events_data_7_days_prior.parquet"
