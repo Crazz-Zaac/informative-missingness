@@ -95,7 +95,7 @@ class TabularDataPreprocessor:
             delta[:, t] = m_values.values[:, t] * 0 + (1 - m_values.values[:, t]) * (
                 1 + delta[:, t - 1]
             )
-
+        # normalize by number of features 
         delta = delta / m_values.shape[1]
 
         # Create delta DataFrame with proper column names
