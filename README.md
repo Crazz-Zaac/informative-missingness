@@ -20,8 +20,9 @@ project/
 │   │   │   └── results/            # stores models results
 ├── plots/                        # Stores performance plots and visualizations
 ├── scripts/                      # Scripts to prepare raw data by querying PostgreSQL
-│   └── fetch_demographics_data.py  # Script to fetch demographics data from DB and merge the target file
-│   └── fetch_labevents_data.py  # Script to fetch labevents data from DB
+│   └── fetch_demographics_data.py      # fetches the demographics data from DB and merge the target file
+│   └── fetch_labevents_data.py         # fetches the labevents data from DB
+│   └── prepare_data.py                 # main entry point to the raw data extraction process pipeline
 ├── src/
 │   ├── config/
 │   │   └── schemas.py            # Pydantic validation for classes, methods, and data types
@@ -45,6 +46,19 @@ project/
 │       └── logging_utils.py      # Logging configuration and setup
 ├── train_models.sbatch                # Script to assign model training process in HPC
 ```
+---
+
+#### Raw data extraction process pipeline
+- For extracting and preparing the raw data, the `scripts/prepare_data.py` need to be executed. The script format is:
+```shell
+python scripts/prepare_data.py --cohort <cohort type (apl or nf)> --days <days (7 or 14)> --cohort_target <cohort_name>
+
+# Example:
+python scripts/prepare_data.py --cohort apl --days 14 --cohort_target "mimic_iv_target_apl_tr_14_days.csv.gz"
+```
+- This will create a `apl_lab_events_data_with_demographics.parquet` in `raw/apl_lab_events_data_with_demographics.parquet` which will be used during preprocessing.
+
+---
 
 #### Running the pipeline
 ```python

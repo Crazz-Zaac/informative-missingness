@@ -224,7 +224,7 @@ class ExperimentConfig(BaseModel):
     # These will be computed based on project_root
     dataset_dir: Optional[Path] = None
     preprocessed_tabular_data_dir: Optional[Path] = None
-    preprocessed_temporal_data_dir: Optional[Path] = None
+    # preprocessed_temporal_data_dir: Optional[Path] = None
     raw_data_dir: Optional[Path] = None
     temporary_data_dir: Optional[Path] = None
     logging_dir: Optional[Path] = None
@@ -246,7 +246,7 @@ class ExperimentConfig(BaseModel):
 
     def create_dirs(self):
         """Create directories for the experiment."""
-        self.preprocessed_temporal_data_dir.mkdir(parents=True, exist_ok=True)
+        # self.preprocessed_temporal_data_dir.mkdir(parents=True, exist_ok=True)
         self.preprocessed_tabular_data_dir.mkdir(parents=True, exist_ok=True)
         self.raw_data_dir.mkdir(parents=True, exist_ok=True)
         self.temporary_data_dir.mkdir(parents=True, exist_ok=True)
@@ -270,9 +270,9 @@ class ExperimentConfig(BaseModel):
         values["preprocessed_tabular_data_dir"] = (
             project_root / "dataset" / "preprocessed_tabular"
         )
-        values["preprocessed_temporal_data_dir"] = (
-            project_root / "dataset" / "preprocessed_temporal"
-        )
+        # values["preprocessed_temporal_data_dir"] = (
+        #     project_root / "dataset" / "preprocessed_temporal"
+        # )
         values["raw_data_dir"] = project_root / "dataset" / "raw"
         values["temporary_data_dir"] = project_root / "dataset" / "temp"
 
