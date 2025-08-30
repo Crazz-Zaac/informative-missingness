@@ -1,294 +1,240 @@
-import pandas as pd
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
-import os
-from pathlib import Path
 import multiprocessing as mp
-import polars as pl
-import sys
-from loguru import logger
-
-# Setup logging to both file and console
-log_dir = Path.cwd() / "logs"
-log_dir.mkdir(exist_ok=True)
-
-# Remove default logger
-logger.remove()
-
-# Add console logging (INFO level and above)
-logger.add(
-    sys.stderr, 
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}", 
-    level="INFO"
-)
-
-# Add file logging (DEBUG level and above) - creates new file each run
-logger.add(
-    log_dir / "lab_events_extraction_{time:YYYY-MM-DD_HH-mm-ss}.log",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {function} | {message}",
-    level="DEBUG",
-    rotation="10 MB",  # Rotate when file gets too large
-    retention="7 days"  # Keep logs for 7 days
-)
-
-# Add separate file for patients with no lab events (for easy analysis)
-no_labs_logger = logger.bind(category="no_labs")
-logger.add(
-    log_dir / "patients_no_lab_events_{time:YYYY-MM-DD_HH-mm-ss}.log",
-    format="{time:YYYY-MM-DD HH:mm:ss} | {message}",
-    filter=lambda record: record["extra"].get("category") == "no_labs",
-    level="INFO"
-)
-
-logger.info("Logging setup complete - logs will be saved to: " + str(log_dir))
-
-dotenv_path = Path(__file__).resolve().parents[1] / ".env"
-load_dotenv(dotenv_path)
-
-DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
+import pandas as pd
+from sqlalchemy import text
+from sqlalchemy import create_engine
+from pathlib import Path
+import tempfile
+import logging
+from functools import partial
 
 
-def get_engine():
-    url = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    return create_engine(url)
- 
+class LabEventsExtractor:
+    def __init__(
+        self,
+        db_url,
+        logger,
+        raw_output_dir,
+        temp_dir,
+        demographics_file_path,
+        cohort,
+        days,
+    ):
+        self.logger = logger
+        self.raw_output_dir = Path(raw_output_dir)
+        self.temp_dir = Path(temp_dir)
+        self.demographics_file_path = demographics_file_path
+        self.cohort = cohort
+        self.days = days
 
-# Prepare output directory
-temp_dir = Path(__file__).resolve().parents[1] / "dataset" / "temp"
-raw_output_dir = Path(__file__).resolve().parents[1] / "dataset" / "raw"
-temp_dir.mkdir(exist_ok=True)
-raw_output_dir.mkdir(exist_ok=True)
+        # prepare file names
+        self.output_file_name = f"{cohort}_lab_events_data_with_demographics.parquet"
+        self.days_prior_file = f"{cohort}_lab_events_data_{days}_days_prior.parquet"
 
-# File names
-demographics_file = "aplasia_with_demographics_data.parquet"
-output_file_name = "aplasia_lab_events_data_with_demographics.parquet"
-seven_days_file = "aplasia_lab_events_data_7_days_prior.parquet"
-fourteen_days_file = "aplasia_lab_events_data_14_days_prior.parquet"
+        # Load cohort with demographics file
+        parquet_path = self.raw_output_dir / self.demographics_file_path
+        self.cohort_df = pd.read_parquet(parquet_path)
 
+        self.db_url = db_url
+        self.engine = self._get_engine()
 
-# Load cohort
-parquet_path = (
-    Path(__file__).resolve().parents[1]
-    / "dataset"
-    / "raw"
-    / demographics_file
-)
-cohort_df = pd.read_parquet(parquet_path)
+    def _get_engine(self):
+        return create_engine(self.db_url)
 
+    @staticmethod
+    def fetch_batch(args, db_url, temp_dir):
+        """Static method for multiprocessing - receives all data as arguments"""
+        batch_df, batch_idx = args
+        try:
+            # Setup simple logging for this process
+            logging.basicConfig(
+                level=logging.INFO, 
+                format="%(asctime)s | %(levelname)s | %(message)s"
+            )
 
-def fetch_batch(args):
-    batch_df, batch_idx = args
-    engine = get_engine()
+            engine = create_engine(db_url)
+            batch_ids = batch_df[["subject_id", "hadm_id"]].drop_duplicates()
+            if batch_ids.empty:
+                logging.warning(f"Batch {batch_idx} is empty. Skipping.")
+                return None
 
-    batch_ids = batch_df[["subject_id", "hadm_id"]].drop_duplicates()
+            # Build ID tuples
+            id_tuples = []
+            for row in batch_ids.itertuples(index=False):
+                if pd.isna(row.subject_id) or pd.isna(row.hadm_id):
+                    continue
+                sid = int(float(row.subject_id))
+                hid = int(float(row.hadm_id))
+                id_tuples.append((sid, hid))
 
-    if batch_ids.empty:
-        return None
+            if not id_tuples:
+                logging.warning(f"Batch {batch_idx} has no valid IDs. Skipping.")
+                return None
 
-    # Create tuples for the IN clause - handle potential float values
-    id_tuples = []
-    for row in batch_ids.itertuples(index=False):
-        if pd.isna(row.subject_id) or pd.isna(row.hadm_id):
-            continue  # Skip invalid rows
-        sid = int(float(row.subject_id))
-        hid = int(float(row.hadm_id))
-        id_tuples.append((sid, hid))
-    
-    if not id_tuples:  # No valid IDs in this batch
-        logger.warning(f"Batch {batch_idx} has no valid IDs. Skipping.")
-        return None
-        
-    # Convert to string format for SQL
-    id_tuple_str = ",".join([f"({sid},{hid})" for sid, hid in id_tuples])
+            id_tuple_str = ",".join([f"({sid},{hid})" for sid, hid in id_tuples])
 
-    # Construct SQL query for lab events
-    query = f"""
-        SELECT DISTINCT
-            le.subject_id, 
-            le.hadm_id, 
-            le.itemid, 
-            le.charttime, 
-            le.valuenum
-        FROM mimiciv_hosp.labevents le
-        WHERE (le.subject_id, le.hadm_id) IN ({id_tuple_str})
-    """
-    
-    df = pd.read_sql(text(query), engine)
-    logger.info(f"Batch {batch_idx} fetched with {len(df)} lab event records.")
-    
-    # Always merge with batch_df to preserve all patients
-    merged_df = batch_df[
-        ["subject_id", "hadm_id", "dischtime", "target", "gender", "anchor_age", "race"]
-    ].merge(df, on=["subject_id", "hadm_id"], how="left")
-    
-    logger.info(f"Batch {batch_idx} after merge: {len(merged_df)} total records")
-    
-    # Log patients with no lab events
-    patients_no_labs = merged_df[merged_df["itemid"].isna()][["subject_id", "hadm_id"]].drop_duplicates()
-    if not patients_no_labs.empty:
-        logger.info(f"Batch {batch_idx}: {len(patients_no_labs)} patients with NO lab events")
-        
-        # Log to special no-labs file
-        no_labs_logger.info(f"BATCH {batch_idx} - Patients with no lab events:")
-        for _, row in patients_no_labs.iterrows():
-            no_labs_logger.info(f"  Subject ID: {row['subject_id']}, Hospital Admission ID: {row['hadm_id']}")
-        
-        # Also log to main debug log
-        logger.debug(f"Batch {batch_idx} - Patients with no lab events: {patients_no_labs.values.tolist()}")
-    
-    if not merged_df.empty:
-        # Filter for the time window only for rows that have lab events
-        merged_df["charttime"] = pd.to_datetime(merged_df["charttime"])
-        merged_df["dischtime"] = pd.to_datetime(merged_df["dischtime"])
-        
-        # Count patients before time filtering
-        patients_before_time_filter = merged_df[["subject_id", "hadm_id"]].drop_duplicates()
-        
-        # Keep rows without lab events (charttime is NaN) OR within time window
-        time_filtered = merged_df[
-            merged_df["charttime"].isna() |
-            ((merged_df["charttime"] >= merged_df["dischtime"] - pd.Timedelta(days=7))
-             & (merged_df["charttime"] <= merged_df["dischtime"]))
-        ]
-        
-        # Count patients after time filtering
-        patients_after_time_filter = time_filtered[["subject_id", "hadm_id"]].drop_duplicates()
-        
-        # Log patients filtered out by time window
-        patients_filtered_by_time = len(patients_before_time_filter) - len(patients_after_time_filter)
-        if patients_filtered_by_time > 0:
-            logger.warning(f"Batch {batch_idx}: {patients_filtered_by_time} patients filtered out due to time window")
-            
-            # Find which specific patients were filtered out
-            filtered_out_patients = patients_before_time_filter.merge(
-                patients_after_time_filter, 
-                on=["subject_id", "hadm_id"], 
-                how="left", 
-                indicator=True
-            ).query('_merge == "left_only"')[["subject_id", "hadm_id"]]
-            
-            if not filtered_out_patients.empty:
-                logger.debug(f"Batch {batch_idx} - Patients filtered by time: {filtered_out_patients.values.tolist()}")
-        
-        logger.info(f"Batch {batch_idx} after time filtering: {len(time_filtered)} records, {len(patients_after_time_filter)} unique patients")
-        
-        # Final check for patients with no lab events after time filtering
-        final_patients_no_labs = time_filtered[time_filtered["itemid"].isna()][["subject_id", "hadm_id"]].drop_duplicates()
-        if not final_patients_no_labs.empty:
-            logger.info(f"Batch {batch_idx}: {len(final_patients_no_labs)} patients with no lab events in final dataset")
-        
-        if time_filtered.empty:
-            logger.warning(f"Batch {batch_idx} after time filtering is empty.")
+            query = f"""
+                SELECT DISTINCT
+                    le.subject_id, 
+                    le.hadm_id, 
+                    le.itemid, 
+                    le.charttime, 
+                    le.valuenum
+                FROM mimiciv_hosp.labevents le
+                WHERE (le.subject_id, le.hadm_id) IN ({id_tuple_str})
+            """
+
+            df = pd.read_sql(text(query), engine)
+            logging.info(f"Batch {batch_idx} fetched with {len(df)} lab event records.")
+
+            merged_df = batch_df.merge(df, on=["subject_id", "hadm_id"], how="left")
+            logging.info(
+                f"Batch {batch_idx} after merge: {len(merged_df)} total records"
+            )
+
+            # Log patients with no labs
+            patients_no_labs = merged_df[merged_df["itemid"].isna()][
+                ["subject_id", "hadm_id"]
+            ].drop_duplicates()
+            if not patients_no_labs.empty:
+                logging.info(
+                    f"BATCH {batch_idx} - {len(patients_no_labs)} patients with no lab events"
+                )
+
+            if not merged_df.empty:
+                merged_df["charttime"] = pd.to_datetime(merged_df["charttime"])
+                merged_df["dischtime"] = pd.to_datetime(merged_df["dischtime"])
+                # Filter for records within 7 days before discharge
+                time_filtered = merged_df[
+                    merged_df["charttime"].isna()
+                    | (
+                        (
+                            merged_df["charttime"]
+                            >= merged_df["dischtime"] - pd.Timedelta(days=7)
+                        )
+                        & (merged_df["charttime"] <= merged_df["dischtime"])
+                    )
+                ]
+                merged_df = time_filtered
+
+            merged_df = merged_df.drop_duplicates()
+            engine.dispose()
+
+            file_path = Path(temp_dir) / f"lab_batch_{batch_idx}.parquet"
+            merged_df.to_parquet(file_path, index=False)
+            logging.info(f"Batch {batch_idx} saved to {file_path}")
+            return str(file_path)
+
+        except Exception as e:
+            logging.error(f"Error in batch {batch_idx}: {str(e)}")
             return None
-            
-        merged_df = time_filtered
 
-    if merged_df.duplicated().any():
-        logger.warning(f"Batch {batch_idx} contains duplicate records. Removing duplicates.")
-        merged_df = merged_df.drop_duplicates()
+    def run(self, batch_size: int = 1000):
+        self.logger.info("=" * 60)
+        self.logger.info("STARTING LAB EVENTS EXTRACTION")
+        self.logger.info("=" * 60)
 
-    engine.dispose()
+        # Create temporary directory for batch files
+        temp_dir = Path(tempfile.mkdtemp())
+        self.logger.info(f"Using temporary directory: {temp_dir}")
 
-    # Save to parquet
-    file_path = temp_dir / f"lab_batch_{batch_idx}.parquet"
-    merged_df.to_parquet(file_path, index=False)
-    logger.info(f"Batch {batch_idx} saved to {file_path}")
-    return str(file_path)
+        # Prepare batches
+        batch_args = []
+        for i in range(0, len(self.cohort_df), batch_size):
+            batch_df = self.cohort_df.iloc[i : i + batch_size].copy()
+            batch_idx = i // batch_size
+            batch_args.append((batch_df, batch_idx))
 
+        self.logger.info(
+            f"Batch size: {batch_size} - Processing {len(batch_args)} total batches"
+        )
 
-if __name__ == "__main__":
-    logger.info("="*60)
-    logger.info("STARTING LAB EVENTS EXTRACTION")
-    logger.info("="*60)
-    
-    subject_ids = cohort_df["subject_id"].unique().tolist()
-    batch_size = 1000
-    batches = [
-        (cohort_df.iloc[i : i + batch_size], i // batch_size)
-        for i in range(0, len(cohort_df), batch_size)
-    ]
+        # Create partial function with fixed arguments
+        process_func = partial(
+            self.fetch_batch,
+            db_url=self.db_url,
+            temp_dir=str(temp_dir)
+        )
 
-    with mp.Pool(mp.cpu_count() - 1) as pool:
-        logger.info(f"Starting to fetch lab events in {len(batches)} batches of size {batch_size}...")
-        parquet_files = pool.map(fetch_batch, batches)
+        # Use multiprocessing with map
+        with mp.Pool(min(mp.cpu_count() - 1, len(batch_args))) as pool:
+            results = []
+            for i, result in enumerate(pool.imap(process_func, batch_args)):
+                if result:
+                    results.append(result)
+                    self.logger.info(f"Completed batch {i+1}/{len(batch_args)}")
+                else:
+                    self.logger.warning(f"Batch {i+1} failed or returned no data")
 
-    # DEBUG: Check what we got back
-    logger.info(f"Total batches processed: {len(parquet_files)}")
-    none_batches = [i for i, f in enumerate(parquet_files) if f is None]
-    logger.info(f"Batches that returned None: {len(none_batches)} - {none_batches}")
-    
-    # Concatenate results
-    parquet_files = [f for f in parquet_files if f]
-    logger.info(f"Valid parquet files to concatenate: {len(parquet_files)}")
-    
-    if parquet_files:
-        dfs_to_concat = []
-        total_rows = 0
-        
-        for pq in parquet_files:
-            df_temp = pd.read_parquet(pq)
-            logger.info(f"File {pq}: {len(df_temp)} rows")
-            total_rows += len(df_temp)
-            dfs_to_concat.append(df_temp)
-        
-        logger.info(f"Total rows before concatenation: {total_rows}")
-        final_df = pd.concat(dfs_to_concat, ignore_index=True)
-        logger.info(f"Total rows after concatenation: {len(final_df)}")
-        
-        # Final summary statistics
-        unique_patients = final_df[['subject_id', 'hadm_id']].drop_duplicates()
-        patients_with_no_labs = final_df[final_df["itemid"].isna()][["subject_id", "hadm_id"]].drop_duplicates()
-        patients_with_labs = final_df[~final_df["itemid"].isna()][["subject_id", "hadm_id"]].drop_duplicates()
-        
-        logger.info("=" * 60)
-        logger.info("FINAL SUMMARY:")
-        logger.info(f"Total unique patients in final dataset: {len(unique_patients)}")
-        logger.info(f"Patients WITH lab events: {len(patients_with_labs)}")
-        logger.info(f"Patients WITHOUT lab events: {len(patients_with_no_labs)}")
-        logger.info(f"Original cohort size: {len(cohort_df)}")
-        logger.info(f"Missing patients: {len(cohort_df) - len(unique_patients)}")
-        
-        # Log summary to no-labs file as well
-        no_labs_logger.info("=" * 50)
-        no_labs_logger.info("FINAL SUMMARY - PATIENTS WITH NO LAB EVENTS:")
-        no_labs_logger.info(f"Total patients with no lab events: {len(patients_with_no_labs)}")
-        no_labs_logger.info("Complete list:")
-        for _, row in patients_with_no_labs.iterrows():
-            no_labs_logger.info(f"  Subject ID: {row['subject_id']}, Hospital Admission ID: {row['hadm_id']}")
-        no_labs_logger.info("=" * 50)
-        
-        # Show some examples in main log
-        if not patients_with_no_labs.empty:
-            logger.info("First 5 patients with no lab events:")
-            for _, row in patients_with_no_labs.head(5).iterrows():
-                logger.info(f"  Subject ID: {row['subject_id']}, Hospital Admission ID: {row['hadm_id']}")
-        
-        logger.info("=" * 60)
-        
-        # Save final DataFrame to parquet
-        final_df.to_parquet(raw_output_dir / output_file_name, index=False)
-        logger.success(f"✅ Done. Saved {len(final_df)} lab events to lab_event_data_with_demographics.parquet")
-        
-        # Split into 7 and 14 days and save the datasets
-        logger.info("Splitting data into 7 and 14 days datasets...")
-        seven_days_df = final_df[
-            (final_df['charttime'] >= final_df['dischtime'] - pd.Timedelta(days=7)) &
-            (final_df['charttime'] <= final_df['dischtime'])
-        ]
-        fourteen_days_df = final_df[
-            (final_df['charttime'] >= final_df['dischtime'] - pd.Timedelta(days=14)) &
-            (final_df['charttime'] <= final_df['dischtime'])
-        ]
+        parquet_files = results
 
-        seven_days_df.to_parquet(raw_output_dir / seven_days_file, index=False)
-        fourteen_days_df.to_parquet(raw_output_dir / fourteen_days_file, index=False)
-        logger.success(f"✅ 7 days dataset saved to: {raw_output_dir / seven_days_file}")
-        logger.success(f"✅ 14 days dataset saved to: {raw_output_dir / fourteen_days_file}")
-        logger.success(f"📁 Logs saved to: {log_dir}")
+        if not parquet_files:
+            self.logger.error("No valid parquet files to concatenate!")
+            return
 
-    else:
-        logger.error("No valid parquet files to concatenate!")
+        # Concatenate files in chunks to avoid memory issues
+        chunks = []
+        for pq_file in parquet_files:
+            try:
+                df_chunk = pd.read_parquet(pq_file)
+                chunks.append(df_chunk)
+                self.logger.info(f"Loaded {len(df_chunk)} records from {pq_file}")
+            except Exception as e:
+                self.logger.error(f"Error loading {pq_file}: {e}")
+
+        if not chunks:
+            self.logger.error("No data loaded from any parquet files!")
+            return
+
+        final_df = pd.concat(chunks, ignore_index=True)
+
+        # Save the unfiltered data
+        output_path = self.raw_output_dir / self.output_file_name
+        final_df.to_parquet(output_path, index=False)
+        rel_path = Path(output_path).relative_to(self.raw_output_dir.parent)
+        self.logger.info(f"✅ Saved {len(final_df)} records to {rel_path}")
+
+        # Save x-days prior subsets (filtered)
+        if not final_df.empty:
+            final_df["charttime"] = pd.to_datetime(final_df["charttime"])
+            final_df["dischtime"] = pd.to_datetime(final_df["dischtime"])
+
+            days_prior_df = final_df[
+                (
+                    final_df["charttime"]
+                    >= final_df["dischtime"] - pd.Timedelta(days=self.days)
+                )
+                & (final_df["charttime"] <= final_df["dischtime"])
+            ]
+
+            days_prior_path = self.raw_output_dir / self.days_prior_file
+            days_prior_df.to_parquet(days_prior_path, index=False)
+            self.logger.info(
+                f"✅ {self.days_prior_file} days dataset saved with {len(days_prior_df)} records."
+            )
+        else:
+            self.logger.warning("No data to save for days prior subset.")
+
+        # Clean up temporary files
+        self._cleanup_temp_files(parquet_files, temp_dir)
+
+        self.logger.info("Lab events extraction completed successfully.")
+
+    def _cleanup_temp_files(self, parquet_files, temp_dir):
+        """Clean up temporary files"""
+        cleaned_count = 0
+        for pq_file in parquet_files:
+            try:
+                Path(pq_file).unlink()
+                cleaned_count += 1
+            except Exception as e:
+                self.logger.warning(f"Could not delete temp file {pq_file}: {e}")
+
+        try:
+            # Try to remove temp directory if empty
+            if temp_dir.exists():
+                temp_dir.rmdir()
+                self.logger.info(f"Removed temporary directory: {temp_dir}")
+        except Exception as e:
+            self.logger.warning(f"Could not remove temp directory {temp_dir}: {e}")
+
+        self.logger.info(f"Cleaned up {cleaned_count} temporary files")
