@@ -1,0 +1,24 @@
+@startuml
+start
+:Load data (Parquet) → drop duplicates, convert time;
+:Drop unnecessary features;
+if (training_feature == race?) then (yes)
+    :Map race categories;
+    :Encode with OneHotEncoder;
+elseif (gender?) then (yes)
+    :Map M/F to 1/0;
+elseif (anchor_age?) then (yes)
+    :Apply age threshold;
+elseif (target?) then (yes)
+    :Extract target;
+else
+    :Raise error;
+endif
+
+:Discretize time into bins (hours_before_discharge / aggregation_window_size);
+:Compute x/m/delta features;
+:Flatten feature columns;
+:Reindex target data by hadm_id;
+:Save processed data to parquet;
+stop
+@enduml

@@ -1,0 +1,50 @@
+@startuml
+!define RECTANGLE class
+
+' title Raw Data Preprocessing Workflow
+
+RECTANGLE PrepareData {
+  - dataset_dir: Path
+  - raw_output_dir: Path
+  - temp_dir: Path
+  - db_url: str
+  + _get_engine(): Engine
+}
+
+RECTANGLE DemographicsDataFetcher {
+  - engine: Engine
+  - logger
+  - raw_output_dir: Path
+  - cohort_dir: Path
+  - cohort: str
+  - cohort_target: str
+  + fetch_and_save(): Path
+}
+
+RECTANGLE LabEventsExtractor {
+  - db_url: str
+  - logger
+  - raw_output_dir: Path
+  - demographics_file_path: str
+  - cohort: str
+  - days: int
+  + run(batch_size: int)
+  + fetch_batch(batch_df, batch_idx, db_url, temp_dir, logger)
+}
+
+RECTANGLE CohortBatch {
+  - batch_df: DataFrame
+  - batch_idx: int
+}
+
+PrepareData --> DemographicsDataFetcher : uses
+' PrepareData --> LabEventsExtractor : uses
+DemographicsDataFetcher --> "Parquet File": save cohort with demographics data
+DemographicsDataFetcher --> LabEventsExtractor : returns demographics_file_path
+LabEventsExtractor --> CohortBatch : splits cohort_df into batches
+CohortBatch --> LabEventsExtractor.fetch_batch : input for batch
+LabEventsExtractor --> "Multiple Parquet Files" : save processed batches
+LabEventsExtractor --> "Final Parquet" : concat all batches
+LabEventsExtractor --> "Filtered Subsets" : 7-days / 14-days parquet
+LabEventsExtractor --> logger : logs missing patients & stats
+@enduml

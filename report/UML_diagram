@@ -14,6 +14,8 @@ start
 fork
   :XGBoost;
 fork again
+  :GradientBoost;
+fork again
   :CatBoost;
 fork again
   :Random Forest;

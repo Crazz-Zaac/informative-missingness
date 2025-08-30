@@ -1,0 +1,46 @@
+@startuml
+start
+:Group patients_data by (hadm_id, itemid, bin);
+
+:Compute average values → x_df (interpolated, ffill, bfill);
+:Compute presence mask → m_df (1 if present, 0 otherwise);
+:Compute m_values (count of observations);
+
+:Initialize delta array (zeros);
+:Set delta[:,0] = 1 - m_values[:,0];
+
+repeat
+  :For each time t > 0;
+  if (value present at t?) then (yes)
+    :delta[:,t] = 0;
+  else (no)
+    :delta[:,t] = 1 + delta[:,t-1];
+    note right
+    Increment gap counter when data
+    is missing at current time step
+    end note
+  endif
+repeat while (t < total_bins) is (yes)
+->(no);
+
+:Normalize delta by number of bins;
+:Create delta_df with column names item+bin;
+
+if (feature_combinations == "x") then (yes)
+  :Return x_df;
+elseif (== "m") then (yes)
+  :Return m_df;
+elseif (== "delta") then (yes)
+  :Return delta_df;
+elseif (== "x_delta") then (yes)
+  :Return concat(x_df, delta_df);
+elseif (== "m_delta") then (yes)
+  :Return concat(m_df, delta_df);
+elseif (== "x_m_delta") then (yes)
+  :Return concat(x_df, m_df, delta_df);
+else
+  :Raise ValueError;
+endif
+
+stop
+@enduml
