@@ -56,6 +56,90 @@ services:
                 soft: 65536
                 hard: 65536
         shm_size: 1GB
+    
+     # Model training services
+    model-training:
+        build: 
+            context: .                # same context (root of your project)
+            dockerfile: docker/Dockerfile
+        image: model-training:latest
+        container_name: model-training
+        volumes:
+        - .:/project
+        - ./dataset:/project/dataset
+        - ./outputs:/project/outputs
+        - ./configs:/project/configs
+
+    randomforest:
+        build: 
+            context: .                # same context (root of your project)
+            dockerfile: docker/Dockerfile
+        container_name: randomforest_trainer
+        depends_on:
+        - postgres
+        volumes:
+        - .:/project
+        - ./dataset:/project/dataset
+        - ./outputs:/project/outputs
+        - ./configs:/project/configs
+        command: python project/train_model.py --model RandomForest
+
+    gradientboosting:
+        build: 
+            context: .                # same context (root of your project)
+            dockerfile: docker/Dockerfile
+        container_name: gradientboosting_trainer
+        depends_on:
+        - postgres
+        volumes:
+        - .:/project
+        - ./dataset:/project/dataset
+        - ./outputs:/project/outputs
+        - ./configs:/project/configs
+        command: python project/train_model.py --model GradientBoosting
+
+    logisticregression:
+        build: 
+            context: .                # same context (root of your project)
+            dockerfile: docker/Dockerfile
+        container_name: logisticregression_trainer
+        depends_on:
+        - postgres
+        volumes:
+        - .:/project
+        - ./dataset:/project/dataset
+        - ./outputs:/project/outputs
+        - ./configs:/project/configs
+        command: python project/train_model.py --model LogisticRegression
+
+    xgboost:
+        build: 
+            context: .                # same context (root of your project)
+            dockerfile: docker/Dockerfile
+        container_name: xgboost_trainer
+        depends_on:
+        - postgres
+        volumes:
+        - .:/project
+        - ./dataset:/project/dataset
+        - ./outputs:/project/outputs
+        - ./configs:/project/configs
+        command: python project/train_model.py --model XGBoost
+
+    catboost:
+        build: 
+            context: .                # same context (root of your project)
+            dockerfile: docker/Dockerfile
+        container_name: catboost_trainer
+        depends_on:
+        - postgres
+        volumes:
+        - .:/project
+        - ./dataset:/project/dataset
+        - ./outputs:/project/outputs
+        - ./configs:/project/configs
+        command: python project/train_model.py --model CatBoost
+        
 volumes:
     postgres_data:
         driver: local
