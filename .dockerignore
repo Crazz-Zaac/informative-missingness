@@ -1,0 +1,46 @@
+# Large dataset
+mimiciv/
+dataset/
+postgres_data/
+postgres/
+
+# Project files to exclude
+project/project/scripts/
+project/mimiciv/3.1/hosp/
+project/mimiciv/3.1/icu/
+project/project/assets/
+project/papers/
+project/papers/supervisors_recommendation/scripts/
+project/report/
+
+# Git & metadata
+.git/
+*.egg-info
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.pytest_cache/
+
+# Virtual envs
+env/
+venv/
+.venv/
+.myenv/
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and temp files
+*.log
+tmp/
+
+# Experiment outputs
+outputs/

@@ -64,6 +64,18 @@ python scripts/prepare_data.py --cohort apl --days 14 --cohort_target "mimic_iv_
 
 ---
 
+#### Running models in docker container
+- Every time a new package is added or a change is made to the project, it is necessary to build the image. This will create a `model-training` container with all the necessary packages. 
+```bash
+docker compose build --no-cache             # build the image
+```
+- Once the container is started, one or more models can be trained on independent containers separated by spaces.  
+```bash
+docker compose up randomforest     # will start randomforest-trainer container 
+docker compose up randomforest xgboost catboost   # will start randomforest-trainer xgboost-trainer and catboost-trainer container independently
+```
+
+
 #### Running the pipeline
 ```python
 cd project

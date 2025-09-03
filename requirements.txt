@@ -5,16 +5,17 @@ pyarrow==20.0.0
 
 # Machine learning
 scikit-learn==1.6.1
+scikit-optimize==0.10.2
 xgboost==3.0.4
 catboost==1.2.8
 
 # Utilities & logging
-pydantic==2.11.4
 loguru==0.7.3
 PyYAML==6.0.2
 SQLAlchemy==2.0.40
 
-# Optional: type hints for pandas (if you use mypy or pydantic)
-pandas-stubs==2.2.3.250308
+pydantic==2.11.4
+pydantic-settings==2.9.1
+pydantic_core==2.33.2
 
-imbalanced-learn
+imbalanced-learn==0.13.0
