@@ -45,6 +45,9 @@ project/
 │   └── utils/
 │       └── logging_utils.py      # Logging configuration and setup
 ├── train_models.sbatch                # Script to assign model training process in HPC
+docker/
+├── Dockerfile                # All the necessary configurations during container creation
+docker-compose.yml                  # Docker container build related configuration
 ```
 ---
 
