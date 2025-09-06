@@ -24,12 +24,16 @@ RUN apt-get update && \
 
 # Copy requirements first for better caching
 COPY --chown=appuser:appuser requirements.txt .
+# Copy wheels and requirements
+COPY --chown=appuser:appuser wheels/ ./wheels/
+COPY --chown=appuser:appuser requirements.txt .
+
+# Install using local wheels only
+RUN pip install --no-index --find-links=./wheels -r requirements.txt
+
 
 # Switch to non-root user for pip install
 USER appuser
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
 COPY --chown=appuser:appuser . .
