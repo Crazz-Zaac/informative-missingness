@@ -10,10 +10,19 @@
 #SBATCH --nodes=1
 
 module load python
+module load apptainer
 
 # Activate virtual environment 
 source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
 
 
-# Run Python script
-python project/run_exp.py
+# Without apptainer
+# python project/run_exp.py
+
+models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
+MODEL=${models[$SLURM_ARRAY_TASK_ID]}
+
+echo "Training model: $MODEL"
+
+apptainer exec --nv -B $PWD:/project model-training.sif \
+    python project/train_model.py --model $MODEL
