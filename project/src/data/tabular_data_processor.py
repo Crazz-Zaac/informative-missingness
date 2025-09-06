@@ -65,7 +65,7 @@ class TabularDataPreprocessor:
         all_items = patients_data["itemid"].unique()
 
         # Average values within each bin: x
-        x_df = (
+        x_values = (
             patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .mean()
             .unstack(level=["bin"])
@@ -74,9 +74,17 @@ class TabularDataPreprocessor:
             .ffill(axis=1)
             .bfill(axis=1)
         )
-        # Replace remaining missing values with 0
-        # Can be replaced with other imputation strategies if needed
-        x_df = x_df.fillna(0)
+
+        x_values = x_values.fillna(0)
+
+        # Reindex to include all admissions & items
+        x_values = x_values.reindex(
+            pd.MultiIndex.from_product([all_admissions, all_items], names=["hadm_id", "itemid"])
+        )
+
+        # unstack to match m_df and delta_df structure
+        x_df = x_values.unstack(level="itemid")
+
 
         # 1 if data is present, else 0: m
         m_values = (
