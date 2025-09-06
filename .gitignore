@@ -191,3 +191,7 @@ plots/
 .vscode-test/
 experiments/
 catboost_info/
+
+*.tar
+*.sif
+wheels/
