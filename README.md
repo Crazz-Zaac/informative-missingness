@@ -79,7 +79,7 @@ docker compose up randomforest xgboost catboost   # will start randomforest-trai
 ```
 
 
-#### Running the pipeline
+#### Running models without docker
 ```python
 cd project
 python run_exp.py

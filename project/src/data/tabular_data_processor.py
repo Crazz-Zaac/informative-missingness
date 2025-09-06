@@ -58,52 +58,66 @@ class TabularDataPreprocessor:
             return "Other"
 
     def _compute_x_m_delta(self, patients_data):
+        patients_data = patients_data.copy()
+        patients_data["itemid"] = patients_data["itemid"].astype(int)
+
+        all_admissions = patients_data["hadm_id"].unique()
+        all_items = patients_data["itemid"].unique()
+
         # Average values within each bin: x
         x_df = (
             patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .mean()
-            .unstack(level=["itemid", "bin"])
-            .rename(columns=lambda c: f"x_bin{c}")
+            .unstack(level=["bin"])
+            .rename(columns=lambda c: f"x_(bin{c})")
             .interpolate(method="linear", axis=1, limit_area="inside")
             .ffill(axis=1)
             .bfill(axis=1)
         )
+        # Replace remaining missing values with 0
+        # Can be replaced with other imputation strategies if needed
+        x_df = x_df.fillna(0)
 
         # 1 if data is present, else 0: m
-        m_df = (
-            patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
-            .count()
-            .unstack(level=["itemid", "bin"])
-            .rename(columns=lambda c: f"m_bin{c}")
-            .notna()
-            .astype(int)
-        )
-
         m_values = (
             patients_data.groupby(["hadm_id", "itemid", "bin"])["valuenum"]
             .count()
-            .unstack(level=["itemid", "bin"])
-            .notna()
-            .astype(int)
+            .unstack(level=["bin"])
+            .rename(columns=lambda c: f"m_(bin{c})")
         )
+        # Reindexing to ensure all admission-item combinations are present
+        m_values = m_values.reindex(
+            pd.MultiIndex.from_product(
+                [all_admissions, all_items], names=["hadm_id", "itemid"]
+            )
+        )
+        m_values = m_values.fillna(0).astype(int)
+        # unstack to get hadm_id as index and itemid_bin as columns
+        m_df = m_values.unstack(level="itemid")
 
-        # Calculate delta for each admission
+        # Calculate delta for each admission: delta
         delta = np.zeros_like(m_values.values, dtype=float)
         delta[:, 0] = 1 - m_values.values[:, 0]
 
         for t in range(1, m_values.shape[1]):
-            delta[:, t] = m_values.values[:, t] * 0 + (1 - m_values.values[:, t]) * (
-                1 + delta[:, t - 1]
+            prev = delta[:, t - 1]
+            obs = m_values.values[:, t]
+            delta[:, t] = np.where(
+                obs == 1,  # observed
+                0,  # Reset delta if observed
+                1 + prev,  # Increment delta if not observed
             )
-        # normalize by number of features 
+        # normalize by number of features
         delta = delta / m_values.shape[1]
 
         # Create delta DataFrame with proper column names
         delta_df = pd.DataFrame(
             delta,
             index=m_values.index,
-            columns=[f"item{col[0]}_delta_bin{col[1]}" for col in m_values.columns],
+            columns=[f"delta_bin{col}" for col in m_values.columns],
         )
+        # unstack to get hadm_id as index and itemid_bin as columns
+        delta_df = delta_df.unstack(level="itemid")
 
         # Return the requested feature combination
         if self.feature_combinations == "x":
@@ -142,7 +156,9 @@ class TabularDataPreprocessor:
             if "race" in patients_data.columns:
                 logger.info("Mapping race to numerical values")
                 # using OneHotEncoder for multiclass
-                race_encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+                race_encoder = OneHotEncoder(
+                    sparse_output=False, handle_unknown="ignore"
+                )
                 patients_data["race"] = patients_data["race"].apply(self.map_race)
                 patients_data["race"] = race_encoder.fit_transform(
                     patients_data["race"]
@@ -209,27 +225,15 @@ class TabularDataPreprocessor:
         )
 
         # prepare dataframe based on feature combinations
-        logger.info("Compute feature combinations")
+        logger.info(f"Computing the feature combinations: {self.feature_combinations}")
         df_ts = self._compute_x_m_delta(patients_data=patients_data)
-        
+        logger.info(f"Computed features with shape: {df_ts.shape}")
+
         # flattening the column and removing the multiIndex columns
-        df_ts.columns = ["_".join(map(str, col)) if isinstance(col, tuple) else col for col in df_ts.columns]
-
-        # Unstack 'itemid' to get one row per admission with multiple lab*time columns
-        # df_mx = df_ts.unstack(level=-1)
-
-        # # Swap levels of MultiIndex columns so that time bins are outer level and itemid inner level
-        # if isinstance(df_mx.columns, pd.MultiIndex):
-        #     df_mx.columns = df_mx.columns.swaplevel(0, 1)
-
-        # # Sort columns lexically
-        # df_mx = df_mx.sort_index(axis=1)
-
-        # # Flatten MultiIndex columns to strings like 'bin_itemid'
-        # df_mx.columns = [
-        #     "_".join(map(str, col)) if isinstance(col, tuple) else str(col)
-        #     for col in df_mx.columns
-        # ]
+        df_ts.columns = [
+            "_".join(map(str, col)) if isinstance(col, tuple) else col
+            for col in df_ts.columns
+        ]
 
         # setting hadm_id as index and reindexing training feature data
         target_data = cohort_data.set_index("hadm_id")[self.training_feature].reindex(
@@ -246,7 +250,9 @@ class TabularDataPreprocessor:
         df_ts.to_parquet(
             os.path.join(self.preprocessed_data_dir, file_saved_to), index=False
         )
-        logger.info(f"Training Data: {self.feature_combinations} - Data shape: {df_ts.shape}")
+        logger.info(
+            f"Training Data: {self.feature_combinations} - Data shape: {df_ts.shape}"
+        )
         logger.info(
             f"Data prepared for {self.training_feature} and saved to {file_saved_to}"
         )
