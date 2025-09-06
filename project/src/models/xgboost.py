@@ -14,8 +14,8 @@ class XGBoostModel:
             scale_pos_weight = self.config.get("scale_pos_weight"),
             objective = self.config.get("objective"),
             eval_metric = self.config.get("eval_metric"),
-            tree_method = 'hist',
-            device = 'cuda',
+            tree_method = 'gpu_hist',
+            device = 'gpu_predictor',
         )
 
     def fit(self, X, y):

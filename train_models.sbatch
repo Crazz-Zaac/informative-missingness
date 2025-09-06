@@ -19,10 +19,19 @@ source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
 # Without apptainer
 # python project/run_exp.py
 
-models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
-MODEL=${models[$SLURM_ARRAY_TASK_ID]}
+# models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
+# MODEL=${models[$SLURM_ARRAY_TASK_ID]}
 
-echo "Training model: $MODEL"
+# echo "Training model: $MODEL"
 
-apptainer exec --nv -B $PWD:/project model-training.sif \
-    python project/train_model.py --model $MODEL
+# apptainer exec --nv -B $PWD:/project model-training.sif \
+#     python project/train_model.py --model $MODEL
+
+for model in RandomForest GradientBoosting LogisticRegression XGBoost CatBoost
+do
+  apptainer exec --nv -B $PWD:/project model-training.sif \
+    python project/train_model.py --model $model &
+done
+
+wait
+echo "All models have been trained."

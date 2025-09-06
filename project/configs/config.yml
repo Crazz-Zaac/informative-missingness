@@ -16,7 +16,7 @@ data:
     data_path: "../dataset/preprocessed_temporal/"
 
 model:
-  model_type: ["RandomForest", "GradientBoosting", "LogisticRegression", "XGBoost", "CatBoost"] 
+  model_type: "GradientBoosting" # ["RandomForest", "GradientBoosting", "LogisticRegression", "XGBoost", "CatBoost"] 
   hyperparameters:
     # Random Forest model hyperparameters
     RandomForest:
