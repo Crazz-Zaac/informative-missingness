@@ -125,10 +125,14 @@ python project/run_exp.py
 ```
 and comment out these lines:
 ```bash
-models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
-MODEL=${models[$SLURM_ARRAY_TASK_ID]}
+for model in RandomForest GradientBoosting LogisticRegression XGBoost CatBoost
+do
+  apptainer exec --nv -B $PWD:/project model-training.sif \
+    python project/train_model.py --model $model &
+done
 
-echo "Training model: $MODEL"
+wait
+echo "All models have been trained."
 
 apptainer exec --nv -B $PWD:/project model-training.sif \
     python project/train_model.py --model $MODEL
