@@ -8,6 +8,7 @@
 #SBATCH --partition=a100  # Or rtx3080/v100/h100
 #SBATCH --ntasks=1  
 #SBATCH --nodes=1
+#SBATCH --array=0-4
 
 module load python
 module load apptainer
@@ -27,11 +28,9 @@ source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
 # apptainer exec --nv -B $PWD:/project model-training.sif \
 #     python project/train_model.py --model $MODEL
 
-for model in RandomForest GradientBoosting LogisticRegression XGBoost CatBoost
-do
-  apptainer exec --nv -B $PWD:/project model-training.sif \
-    python project/train_model.py --model $model &
-done
 
-wait
-echo "All models have been trained."
+models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
+MODEL=${models[$SLURM_ARRAY_TASK_ID]}
+
+apptainer exec --nv -B $PWD:/project model-training.sif \
+    python project/train_model.py --model $MODEL
