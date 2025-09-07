@@ -73,7 +73,7 @@ class CatBoostTrainer:
                     cv=3,
                     shuffle=False,
                     verbose=3,
-                    plot=True,
+                    plot=False,
                 )
                 best_params_fold = grid_search_results["params"]
                 best_estimators.append(best_params_fold)
@@ -97,7 +97,7 @@ class CatBoostTrainer:
                     train_pool,
                     eval_set=test_pool,
                     verbose=100,
-                    plot=True,
+                    plot=False,
                     metric_period=100,
                 )
 
