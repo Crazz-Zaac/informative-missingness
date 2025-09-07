@@ -48,7 +48,7 @@ class XGBoostTrainer:
             ),
             "n_estimators": Integer(
                 raw_params["n_estimators"][0], raw_params["n_estimators"][2]
-            ),  # Note: using index 2 for the max (200)
+            ),  # Using index 2 for the max (200)
             "scale_pos_weight": Real(
                 raw_params["scale_pos_weight"][0],
                 raw_params["scale_pos_weight"][1],
@@ -70,7 +70,6 @@ class XGBoostTrainer:
         X, y, groups = self.dataset.load_and_split_data()
 
         sgkf = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)
-
 
         try:
             for fold, (train_idx, test_idx) in enumerate(sgkf.split(X, y, groups)):
