@@ -68,7 +68,7 @@ class GradientBoostingTrainer:
 
         try:
             for fold, (train_idx, val_idx) in enumerate(skf.split(X, y, groups=groups)):
-                logger.info(f"Training fold {fold + 1}...")
+                logger.info(f"\n=== Running Fold {fold + 1} ===")
                 X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
                 y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
                 
