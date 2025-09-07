@@ -12,7 +12,11 @@ def setup_logging(config: LoggingConfig, model_type: Union[str, ModelTypeEnum]):
     config.log_dir.mkdir(parents=True, exist_ok=True)
     
     # Get model type string
-    model_str = model_type.value if isinstance(model_type, ModelTypeEnum) else str(model_type)
+    if isinstance(model_type, ModelTypeEnum):
+        model_str = model_type.value
+    else:
+        model_str = str(model_type)
+
     
     # Configure log file
     log_file = config.get_log_filepath(model_str)
