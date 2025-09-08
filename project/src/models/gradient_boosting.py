@@ -1,5 +1,6 @@
 from sklearn.ensemble import GradientBoostingClassifier
 
+
 class GradientBoostingModel:
     def __init__(self, config: dict):
         self.config = config
@@ -7,13 +8,7 @@ class GradientBoostingModel:
 
     def _initialize_model(self):
         """Initialize the Gradient Boosting model with the given configuration."""
-        return GradientBoostingClassifier(
-            learning_rate=self.config.get("learning_rate"),
-            max_depth=self.config.get("max_depth"),
-            n_estimators=self.config.get("n_estimators"),
-            min_samples_split=self.config.get("min_samples_split"),
-            min_samples_leaf=self.config.get("min_samples_leaf"),
-        )
+        return GradientBoostingClassifier(**self.config)
 
     def fit(self, X, y):
         """Fit the Gradient Boosting model to the training data."""

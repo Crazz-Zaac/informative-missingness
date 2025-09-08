@@ -83,7 +83,7 @@ class CatBoostTrainer:
                 )
                 for key, val in best_params_fold.items():
                     logger.info(f"  {key}: {val}")
-                
+
                 pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
 
                 final_model = CatBoostClassifier(
@@ -91,6 +91,7 @@ class CatBoostTrainer:
                     **best_params_fold,
                     scale_pos_weight=pos_weight,
                     custom_metric=["Precision", "Recall", "F1", "PRAUC"],
+                    verbose=0,
                 )
 
                 final_model.fit(
