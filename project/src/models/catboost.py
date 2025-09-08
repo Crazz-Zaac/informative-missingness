@@ -9,16 +9,7 @@ class CatBoostModel:
     def _initialize_model(self):
         """Initialize the model with the given configurations"""
 
-        return CatBoostClassifier(
-            learning_rate=self.config.get("learning_rate"),
-            depth=self.config.get("depth"),
-            iterations=self.config.get("iterations"),
-            loss_function=self.config.get("loss_function"),
-            l2_leaf_reg=self.config.get("l2_leaf_reg"),
-            border_count=self.config.get("border_count"),
-            eval_metric=self.config.get("eval_metric"),
-            task_type="GPU",
-        )
+        return CatBoostClassifier(**self.config, verbose=0)
 
     def fit(self, X, y):
         self.model.fit(X, y)
