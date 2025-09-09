@@ -40,10 +40,10 @@ def main():
     
     # Setup base logging (before parallel execution)
     base_log_file = setup_logging(config.logging, model_type="experiment")
-    logger.info(f"Experiment started (main log: {base_log_file})")
-    logger.info(f"Project root: {PROJECT_ROOT}")
-    logger.info(f"Experiment directory: {config.experiment_dir}")
-    
+    logger.info(f"Experiment started (main log: {Path(base_log_file).stem})")
+    logger.info(f"Project root: {Path(PROJECT_ROOT).stem}")
+    logger.info(f"Experiment directory: {Path(config.experiment_dir).stem}")
+
     # Prepare models (validate before parallel execution)
     model_types = config.model.model_type
     if isinstance(model_types, str):
@@ -51,24 +51,12 @@ def main():
     
     logger.info(f"Training models: {', '.join(model_types)}")
     
-    # Limit workers based on resources
-    max_workers = min(len(model_types), os.cpu_count() or 1)
-    logger.info(f"Using {max_workers} parallel workers")
-    
-    # Run training
-    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(train_model, model_name, config): model_name
-            for model_name in model_types
-        }
-        
-        for future in concurrent.futures.as_completed(futures):
-            model_name = futures[future]
-            try:
-                future.result()
-                logger.success(f"{model_name} completed successfully")
-            except Exception as e:
-                logger.error(f"{model_name} failed: {str(e)}")
+    for model_name in model_types:
+        try:
+            train_model(model_name, config)
+            logger.success(f"{model_name} completed successfully")
+        except Exception as e:
+            logger.error(f"{model_name} failed: {str(e)}")
 
 if __name__ == "__main__":
     main()
