@@ -1,7 +1,6 @@
 import catboost
 from catboost import CatBoostClassifier
 from sklearn.model_selection import StratifiedGroupKFold
-from imblearn.over_sampling import RandomOverSampler
 from sklearn.metrics import (
     auc,
     precision_recall_curve,

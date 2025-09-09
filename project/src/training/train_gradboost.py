@@ -90,7 +90,7 @@ class GradientBoostingTrainer:
                 grid_search = GridSearchCV(
                     estimator=base_model,
                     param_grid=self.gradboost_grid_search_params,
-                    cv=5,
+                    cv=3,
                     scoring="roc_auc",
                     n_jobs=1,
                     verbose=1,

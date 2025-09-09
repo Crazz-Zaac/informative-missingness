@@ -2,7 +2,7 @@
 #SBATCH --job-name=run_exp
 #SBATCH --output=slurm_logs/run_exp%j.out  # %j adds job ID
 #SBATCH --error=slurm_logs/run_exp%j.err
-#SBATCH --time=20:00:00 # Set a time limit (20 hours in this case)
+#SBATCH --time=23:00:00 # Set a time limit (23 hours in this case)
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
 #SBATCH --partition=a100  # Or rtx3080/v100/h100
