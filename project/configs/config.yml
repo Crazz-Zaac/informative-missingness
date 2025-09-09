@@ -6,7 +6,7 @@ data:
     training_data: "apl" # apl or nf file name for tabular data
     window_size: 7 # intitial window size for tabular data
     # x: features, m: missingness, delta: elapsed time since last observation
-    feature_combinations: "delta" # x, m, delta, x_delta, m_delta, x_m_delta
+    feature_combinations: "x_m_delta" # x, m, delta, x_delta, m_delta, x_m_delta
     feature_type: "numeric" # categorical, numeric
     aggregation_window_size: 12 # hours for aggregation
     training_feature: "target" # target, gender, race, anchor_age

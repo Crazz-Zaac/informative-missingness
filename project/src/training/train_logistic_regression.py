@@ -120,7 +120,7 @@ class LogisticRegressionTrainer:
             for key, value in self.fixed_params.items():
                 logger.info(f"  {key}: {value}")
             logger.info("Logging grid search parameters:")
-            for key, value in self.rf_grid_search_params.items():
+            for key, value in self.grid_search_params.items():
                 logger.info(f"  {key}: {value}")
 
             # Summary
