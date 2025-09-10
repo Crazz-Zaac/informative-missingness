@@ -20,7 +20,9 @@ def train_model(model_name: str, config: ExperimentConfig):
 
         # Setup per-model logging
         model_log_file = setup_logging(config.logging, model_type=model_type)
-        logger.info(f"Starting training for {model_type.value} (log: {model_log_file})")
+        logger.info(
+            f"Starting training for {model_type.value} (log: {Path(model_log_file).stem})"
+        )
 
         trainer = trainer_cls(config=config)
         return trainer.run_training()
@@ -52,14 +54,13 @@ def main():
 
     # Setup base logging
     base_log_file = setup_logging(config.logging, model_type=args.model)
-    logger.info(f"Experiment started (main log: {base_log_file})")
+    logger.info(f"Experiment started (main log: {Path(base_log_file).stem})")
 
     # Train a model
     if args.model:
         logger.info(f"Training single model: {args.model}")
         train_model(args.model, config)
         return
-    
 
 
 if __name__ == "__main__":
