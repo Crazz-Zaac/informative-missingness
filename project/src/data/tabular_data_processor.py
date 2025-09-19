@@ -169,7 +169,7 @@ class TabularDataPreprocessor:
                 )
                 patients_data["race"] = patients_data["race"].apply(self.map_race)
                 patients_data["race"] = race_encoder.fit_transform(
-                    patients_data["race"]
+                    patients_data[["race"]]
                 )
                 cohort_data = patients_data[
                     ["hadm_id", "subject_id", "race"]
