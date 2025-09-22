@@ -3,8 +3,7 @@ start
 :Load data (Parquet) → drop duplicates, convert time;
 :Drop unnecessary features;
 if (training_feature == race?) then (yes)
-    :Map race categories;
-    :Encode with OneHotEncoder;
+    :Binarize race: Map to\nCaucasian vs. non-Caucasian;
 elseif (gender?) then (yes)
     :Map M/F to 1/0;
 elseif (anchor_age?) then (yes)
