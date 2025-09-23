@@ -3,7 +3,7 @@ experiment_name: "informative_missingness"
 data:
   tabular:
     data_path: "../dataset/preprocessed_tabular/"
-    training_data: "apl" # apl or nf file name for tabular data
+    training_data: "nf" # apl or nf file name for tabular data
     window_size: 7 # intitial window size for tabular data
     # x: features, m: missingness, delta: elapsed time since last observation
     feature_combinations: "x_m" # x, m, delta, x_m, x_delta, m_delta, x_m_delta
