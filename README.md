@@ -52,6 +52,31 @@ docker/
 docker-compose.yml                  # Docker container build related configuration
 ```
 ---
+### Docker configuration
+All the configurations related to docker can be found inside `docker-compose.yml` file. Configurations related to memory might need to be adjusted as per your system.
+```bash
+resources:
+    limits:
+        cpus: '12'
+        memory: 4G
+    reservations:
+        memory: 4G
+```
+- Rest of the configurations should be fine. You can find the postgres login details under `environment` variable:
+---
+
+### Loading the data to `postgres` docker container
+- Copy `postgres/load.sql` to `load_mimic.sql`
+    - `docker cp postgres/load.sql mimiciv_postgres:load_mimic.sql`
+- Then docker execute the `load_mimic.sql`
+    - `docker exec -it mimiciv_postgres psql -U postgres -d mimiciv -f /load_mimic.sql`
+- This will take sometime. You can then test it with the following query to login to postgres and display the data, for example, from the `mimiciv_hosp.admissions` table.
+    - `docker exec mimiciv_postgres psql -U postgres -d mimiciv -c "SELECT * FROM mimiciv_hosp.admissions;"`
+---
+
+### Data Extraction
+- Cohort data must be extracted first from the `PostgreSQL` database.
+- Make sure `postgres` container is running by doing `docker compose up -d`. This will start all the containers basically.
 
 #### Raw data extraction process pipeline
 - For extracting and preparing the raw data, the `scripts/prepare_data.py` need to be executed. The script format is:
@@ -69,8 +94,8 @@ python scripts/prepare_data.py --cohort apl --days 14 --cohort_target "mimic_iv_
 
 ---
 
-#### Running the pipeline locally
-- Every time a *new package* is added or a change is made to the project, it is necessary to re-build the image. This will create a `model-training` container with including all the packages. 
+### Running the pipeline locally
+- Every time a *new package* is added or a change is made to the project, it is necessary to re-build the image. This will create a `model-training` container including all the packages. 
 1. Using docker
 ```bash
 docker compose build --no-cache             # builds the image
