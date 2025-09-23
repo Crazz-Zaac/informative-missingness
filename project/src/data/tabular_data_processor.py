@@ -134,6 +134,8 @@ class TabularDataPreprocessor:
             return m_df
         elif self.feature_combinations == "delta":
             return delta_df
+        elif self.feature_combinations == "x_m":
+            return pd.concat([x_df, m_df], axis=1)
         elif self.feature_combinations == "x_delta":
             return pd.concat([x_df, delta_df], axis=1)
         elif self.feature_combinations == "m_delta":
@@ -143,7 +145,7 @@ class TabularDataPreprocessor:
         else:
             raise ValueError(
                 f"Invalid feature_combinations: {self.feature_combinations}. "
-                "Must be one of: 'x', 'm', 'delta', 'x_delta', 'm_delta', 'x_m_delta'"
+                "Must be one of: 'x', 'm', 'delta', 'x_m', 'x_delta', 'm_delta', 'x_m_delta'"
             )
 
     def preprocess_and_save(self, input_filename: str):
