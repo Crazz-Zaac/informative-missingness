@@ -161,18 +161,12 @@ class TabularDataPreprocessor:
         patients_data = patients_data.drop(columns=columns_to_drop, errors="ignore")
         patients_data = patients_data.dropna(subset=["charttime", "dischtime"])
 
-        # If training with race, ensure race column exists
         if self.training_feature == "race":
             if "race" in patients_data.columns:
                 logger.info("Mapping race to numerical values")
-                # using OneHotEncoder for multiclass
-                race_encoder = OneHotEncoder(
-                    sparse_output=False, handle_unknown="ignore"
-                )
-                patients_data["race"] = patients_data["race"].apply(self.map_race)
-                patients_data["race"] = race_encoder.fit_transform(
-                    patients_data[["race"]]
-                )
+
+                patients_data["race"] = (patients_data["race"].str.upper() != "WHITE").astype(int) 
+
                 cohort_data = patients_data[
                     ["hadm_id", "subject_id", "race"]
                 ].drop_duplicates()
