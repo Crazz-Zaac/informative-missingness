@@ -87,8 +87,8 @@ class LogisticRegressionTrainer:
                     param_grid=self.grid_search_params,
                     cv=3,
                     scoring="roc_auc",
-                    n_jobs=-1,
-                    verbose=1,
+                    n_jobs=1,
+                    verbose=2,
                 )
                 grid_search.fit(X_train, y_train)
 

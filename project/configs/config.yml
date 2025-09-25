@@ -63,9 +63,9 @@ model:
         C: 1.0
         
       grid_search_params:
-        penalty: ["l1", "l2", "elasticnet"]   # all supported by saga
+        penalty: ["l1", "l2"]   # all supported by saga
         C: [0.1, 1.0]
-        l1_ratio: [0.1, 0.5, 1.0]  # only used if penalty is elasticnet
+        l1_ratio: [0.1, 1.0]  # only used if penalty is elasticnet
 
 
     # XGBoost model hyperparameters
