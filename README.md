@@ -56,7 +56,7 @@ docker-compose.yml                  # Docker container build related configurati
 ![Code base](report/codebase.png)
 
 ---
-### Docker configuration
+## Docker configuration
 All the configurations related to docker can be found inside `docker-compose.yml` file. Configurations related to memory might need to be adjusted as per your system.
 ```bash
 resources:
@@ -69,7 +69,7 @@ resources:
 - Rest of the configurations should be fine. You can find the postgres login details under `environment` variable:
 ---
 
-### Loading the data to `postgres` docker container
+## Loading the data to `postgres` docker container
 - Copy `postgres/load.sql` to `load_mimic.sql`
     - `docker cp postgres/load.sql mimiciv_postgres:load_mimic.sql`
 - Then docker execute the `load_mimic.sql`
@@ -78,11 +78,11 @@ resources:
     - `docker exec mimiciv_postgres psql -U postgres -d mimiciv -c "SELECT * FROM mimiciv_hosp.admissions;"`
 ---
 
-### Data Extraction
+## Data Extraction
 - Cohort data must be extracted first from the `PostgreSQL` database.
 - Make sure `postgres` container is running by doing `docker compose up -d`. This will start all the containers basically.
 
-#### Raw data extraction process pipeline
+### Raw data extraction process pipeline
 - Before runnin the pipeline, it's important to have your data ready.For extracting and preparing the raw data, the `scripts/prepare_data.py` need to be executed. The script format is:
 ```shell
 python scripts/prepare_data.py --cohort <cohort type (apl or nf)> --days <days (7 or 14)> --cohort_target <cohort_name>
@@ -98,7 +98,7 @@ python scripts/prepare_data.py --cohort apl --days 14 --cohort_target "mimic_iv_
 
 ---
 
-### Running the pipeline locally
+## Running the pipeline locally
 - Every time a *new package* is added or a change is made to the project, it is necessary to re-build the image. This will create a `model-training` container including all the packages. 
 1. Using docker
 ```bash
@@ -118,7 +118,7 @@ python run_exp.py
 ```
 
 
-#### Running the pipeline in `HPC` server
+### Running the pipeline in `HPC` server
 
 1. Using `apptainer/docker`
 - Create wheels (`.whl`) files to avoid package dependency conflicts
@@ -169,12 +169,36 @@ apptainer exec --nv -B $PWD:/project model-training.sif \
 
 ---
 
-#### Helpful commands 
+### Helpful commands 
 - Copying raw data files from local to remote
 ```bash
 scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 ```
 
 --- 
-## Queries to load the `mimiciv` data
-- The `.sql` files in `/postgres` is copied from the [MIMIC Github Repository](https://github.com/MIT-LCP/mimic-code/tree/main/mimic-iv/buildmimic/postgres) 
+## Results
+1. Aplasia Cohort
+- Clinical Target
+![Clinical Targe](results/APL_Clinical_Target_CB_metrics.png)
+
+- Gender
+![Gender](results/APL_Gender_CB_metrics.png)
+
+- Race
+![Race](results/APL_Race_CB_metrics.png)
+
+- Age
+![Age](results/APL_Age_CB_metrics.png)
+
+2. Neutropenic Fever Cohort
+- Clinical Target
+![NF Clinical Target](results/NF_Clinical_Target_CB_metrics.png)
+
+- Gender
+![Gender NF](results/NF_Gender_CB_metrics.png)
+
+- Race
+![Race NF](results/NF_Race_CB_metrics.png)
+
+- Age
+![Age_NF](results/NF_Age_CB_metrics.png)
