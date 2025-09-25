@@ -141,6 +141,23 @@ scp model-training.tar USERNAME@CLUSTER:/home/USERNAME/project_folder/model-trai
 apptainer build model-training.sif docker-archive://model-training.tar          # create .sif file 
 ```
 
+- Edit configurations in `train_models.sbatch` 
+Uncomment these:
+```bash
+models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
+MODEL=${models[$SLURM_ARRAY_TASK_ID]}
+
+apptainer exec --nv -B $PWD:/project model-training.sif \
+    python project/train_model.py --model $MODEL
+```
+
+- Set the number of jobs
+**Important:** Based on the number of models you are training, set the value of `#SBATCH --array` between `0-4`
+```bash
+#SBATCH --array=0-4    --> this will run all 5 models 
+
+```
+
 - Run the slurm job
 ```bash
 sbatch -p work train_models.sbatch
@@ -154,14 +171,8 @@ python project/run_exp.py
 ```
 and comment out these lines:
 ```bash
-for model in RandomForest GradientBoosting LogisticRegression XGBoost CatBoost
-do
-  apptainer exec --nv -B $PWD:/project model-training.sif \
-    python project/train_model.py --model $model &
-done
-
-wait
-echo "All models have been trained."
+models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
+MODEL=${models[$SLURM_ARRAY_TASK_ID]}
 
 apptainer exec --nv -B $PWD:/project model-training.sif \
     python project/train_model.py --model $MODEL
@@ -177,7 +188,7 @@ scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 
 --- 
 ## Results
-1. Aplasia Cohort
+[x] Aplasia Cohort
 - Clinical Target
 ![Clinical Targe](results/APL_Clinical_Target_CB_metrics.png)
 
@@ -190,7 +201,7 @@ scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 - Age
 ![Age](results/APL_Age_CB_metrics.png)
 
-2. Neutropenic Fever Cohort
+[x] Neutropenic Fever Cohort
 - Clinical Target
 ![NF Clinical Target](results/NF_Clinical_Target_CB_metrics.png)
 

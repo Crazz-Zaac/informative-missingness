@@ -20,17 +20,10 @@ source /home/hpc/iwbn/iwbn111h/.venv/bin/activate
 # Without apptainer
 # python project/run_exp.py
 
-# models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
-# MODEL=${models[$SLURM_ARRAY_TASK_ID]}
+# With apptainer
+# Define an array of models to iterate over
 
-# echo "Training model: $MODEL"
-
-# apptainer exec --nv -B $PWD:/project model-training.sif \
-#     python project/train_model.py --model $MODEL
-
-
-# models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
-models=("LogisticRegression")
+models=("RandomForest" "GradientBoosting" "LogisticRegression" "XGBoost" "CatBoost")
 MODEL=${models[$SLURM_ARRAY_TASK_ID]}
 
 apptainer exec --nv -B $PWD:/project model-training.sif \
