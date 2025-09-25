@@ -1,6 +1,9 @@
 @startuml
 !define RECTANGLE class
 
+' Set horizontal layout
+left to right direction
+
 ' title Raw Data Preprocessing Workflow
 
 RECTANGLE PrepareData {

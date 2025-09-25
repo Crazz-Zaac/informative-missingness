@@ -1,4 +1,7 @@
 @startuml
+' Use vertical layout
+top to bottom direction
+
 ' caption Figure 1: Machine Learning Training Pipeline Architecture
 ' title Code Base Overview
 
@@ -36,10 +39,15 @@ package "src" {
   }
 }
 
-' Relationships with labels
-config.schemas --> data.data_loader : defines structure
-data.data_loader --> data.data_preprocessing : raw data
-data.data_preprocessing --> data.tabular_data_processor : processed data
+package "dataset" {
+    package "preprocessed_tabular" {}
+    package "raw" {}
+}
+
+' Relationships
+config.schemas --> data.data_loader : load yaml configs
+data.dataset --> data.data_loader : read configs
+data.data_preprocessing --> dataset.preprocessed_tabular : load processed data
 
 training.train_xgboost --> models.xgboost : uses
 training.train_catboost --> models.catboost : uses
@@ -47,38 +55,17 @@ training.train_rf --> models.random_forest : uses
 training.train_logistic_regression --> models.logistic_regression : uses
 training.train_gradboost --> models.gradient_boosting : uses
 
-' Explicit relationships for logging and dataset
-training.train_xgboost --> utils.logging_utils : logs to
-training.train_catboost --> utils.logging_utils : logs to
-training.train_rf --> utils.logging_utils : logs to
-training.train_logistic_regression --> utils.logging_utils : logs to
-training.train_gradboost --> utils.logging_utils : logs to
-training.logger --> utils.logging_utils : uses
+training.train_xgboost <-- data.data_preprocessing : trains on
+training.train_catboost <-- data.data_preprocessing : trains on
+training.train_rf <-- data.data_preprocessing : trains on
+training.train_logistic_regression <-- data.data_preprocessing : trains on
+training.train_gradboost <-- data.data_preprocessing : trains on
 
-training.train_xgboost --> data.dataset : trains on
-training.train_catboost --> data.dataset : trains on
-training.train_rf --> data.dataset : trains on
-training.train_logistic_regression --> data.dataset : trains on
-training.train_gradboost --> data.dataset : trains on
-training.logger --> data.dataset : monitors
-
-' Notes and annotations
+' Notes
 note left of config.schemas
   Defines data schemas
   and pydantic validation rules
   for input data and variables
 end note
-
-' note top of data.data_loader : Loads data from\nmultiple sources\n(CSV, JSON, databases)
-
-' note "Main training pipeline\nhandles multiple ML algorithms" as N1
-' N1 ~~~ training.train_xgboost
-
-' legend right
-'   | Color | Meaning |
-'   | <#lightblue> | Data Processing |
-'   | <#lightgreen> | Model Training |
-'   | <#lightyellow> | Utilities |
-' end legend
 
 @enduml

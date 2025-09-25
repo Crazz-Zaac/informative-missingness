@@ -52,6 +52,10 @@ docker/
 docker-compose.yml                  # Docker container build related configuration
 ```
 ---
+## Codebase at a glance
+![Code base](report/codebase.png)
+
+---
 ### Docker configuration
 All the configurations related to docker can be found inside `docker-compose.yml` file. Configurations related to memory might need to be adjusted as per your system.
 ```bash
@@ -171,7 +175,6 @@ apptainer exec --nv -B $PWD:/project model-training.sif \
 scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 ```
 
-##### Queries to load the `mimiciv` data
+--- 
+## Queries to load the `mimiciv` data
 - The `.sql` files in `/postgres` is copied from the [MIMIC Github Repository](https://github.com/MIT-LCP/mimic-code/tree/main/mimic-iv/buildmimic/postgres) 
-
-- Model Calibration with [PyCalEva](https://martinweigl.github.io/pycaleva/)
