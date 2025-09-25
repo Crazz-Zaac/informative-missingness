@@ -3,7 +3,6 @@
 ### 📁 Project Structure
 ```bash
 project/
-├── run_exp_rf.py                 # Main training script to train models
 ├── configs/
 │   └── config.yml                # Configuration for all the Machine Learning models
 ├── dataset/                      # Data loading & preprocessing
@@ -11,7 +10,11 @@ project/
 │   ├── raw/                      # Stores raw data before preprocessing
 │   └── temp/                     # Stores intermediate data (from PostgreSQL)
 ├── db_utils/                     # Configurations for the PostgreSQL database
-├── notebooks/                    # Jupyter notebooks for exploration and debugging
+│   └── db_config.py              # Stores DB configurations 
+│   └── db_setup.py               # Used to connect to the DB display infos
+├── notebooks/                    
+│   └── exp_2025.ipynb                          # Jupyter notebooks for exploration and debugging
+│   └── plot_metric_results.ipynb                # Plotting metric results
 ├── outputs/                      # output for all the experiments
 │   └── experiments
 │   │   ├── 20250811_222344         # This folder is created based on the date and time
@@ -25,7 +28,7 @@ project/
 │   └── prepare_data.py                 # main entry point to the raw data extraction process pipeline
 ├── src/
 │   ├── config/
-│   │   └── schemas.py            # Pydantic validation for classes, methods, and data types
+│   │   └── schemas.py            # Pydantic validation for all the classes, methods, and data types
 │   ├── data/                     # Data handling and preprocessing
 │   │   ├── data_loader.py        # Loads data from sources
 │   │   ├── dataset.py            # Dataset logic and split handling
@@ -188,7 +191,7 @@ scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 
 --- 
 ## Results
-[x] Aplasia Cohort
+- [x] Aplasia Cohort
 - Clinical Target
 ![Clinical Targe](results/APL_Clinical_Target_CB_metrics.png)
 
@@ -201,7 +204,7 @@ scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 - Age
 ![Age](results/APL_Age_CB_metrics.png)
 
-[x] Neutropenic Fever Cohort
+- [x] Neutropenic Fever Cohort
 - Clinical Target
 ![NF Clinical Target](results/NF_Clinical_Target_CB_metrics.png)
 
