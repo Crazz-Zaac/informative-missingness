@@ -79,7 +79,7 @@ resources:
 - Make sure `postgres` container is running by doing `docker compose up -d`. This will start all the containers basically.
 
 #### Raw data extraction process pipeline
-- For extracting and preparing the raw data, the `scripts/prepare_data.py` need to be executed. The script format is:
+- Before runnin the pipeline, it's important to have your data ready.For extracting and preparing the raw data, the `scripts/prepare_data.py` need to be executed. The script format is:
 ```shell
 python scripts/prepare_data.py --cohort <cohort type (apl or nf)> --days <days (7 or 14)> --cohort_target <cohort_name>
 
