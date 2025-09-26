@@ -195,3 +195,5 @@ catboost_info/
 *.tar
 *.sif
 wheels/
+*.csv
+*.gz
