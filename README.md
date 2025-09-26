@@ -126,7 +126,7 @@ python run_exp.py
 ### Running the pipeline in `HPC` server
 
 1. Using `apptainer/docker`
-- Exclude unnecessary files before building to avoid bloating the Docker image. Make sure you have `.dockerignore` (![more info here](https://docs.docker.com/build/concepts/context/#dockerignore-files)) file at the project root. At minimum, exclude these:
+- Exclude unnecessary files before building to avoid bloating the Docker image. Make sure you have `.dockerignore` ([more info here](https://docs.docker.com/build/concepts/context/#dockerignore-files)) file at the project root. At minimum, exclude these:
 ```bash
 # Large dataset
 mimiciv/
@@ -143,10 +143,10 @@ outputs/
 
 ```
 
-- Create wheels (`.whl`) files to avoid package dependency conflicts. These wheels (`.whl`) are built using customf ![docker/Dockerfile](docker/Dockerfile), which:
-    - Ensures consistent builds by installing dependencies only from pre-downloaded `.whl` files which is super useful especially in HPC environment.
-    - **Avoids PyPI network calls on HPC clusters.**
-- Check out ![docker/README.md](docker/README.md) for detailed instructions. 
+- Create wheels (`.whl`) files to avoid package dependency conflicts. These wheels are built using custom [docker/Dockerfile](docker/Dockerfile), which:
+    - Ensures consistent builds by installing dependencies only from pre-downloaded  files which is super useful especially in HPC environment.
+    - *Avoids PyPI network calls on HPC clusters.*
+- Check out [docker/README.md](docker/README.md) for detailed instructions. 
 
 ```bash
 pip download -r requirements.txt -d wheels/
