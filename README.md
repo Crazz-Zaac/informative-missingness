@@ -101,6 +101,21 @@ python scripts/prepare_data.py --cohort apl --days 14 --cohort_target "mimic_iv_
 
 ---
 
+## Configurations
+
+Before starting model training, you **must review and adjust the configuration files** inside the [`configs/`](configs/) directory.  
+
+👉 See the [configs/README.md](project/configs/README.md) for detailed instructions on how to set:  
+- Cohort-specific training data  
+- Window sizes (7, 14, or 21 days, matching raw data preparation)  
+- Feature combinations (`x`, `m`, `delta`, or their combinations)  
+- Model type and hyperparameters  
+
+⚠️ Incorrect configuration will result in invalid or inconsistent experiments.
+
+---
+
+
 ## Running the pipeline locally
 - Every time a *new package* is added or a change is made to the project, it is necessary to re-build the image. This will create a `model-training` container including all the packages. 
 1. Using docker
@@ -119,7 +134,6 @@ docker compose up randomforest xgboost catboost     # starts randomforest-traine
 cd project
 python run_exp.py
 ```
-
 
 ### Running the pipeline in `HPC` server
 

@@ -100,7 +100,7 @@ model:
 
 
 training:
-  validation_split: 0.2
+  validation_split: 0.2       # this hasn't been implemented yet
 evaluation:
   metrics: ["accuracy", "f1_score", "precision", "recall"]
 logging:
