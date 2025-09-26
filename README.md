@@ -86,18 +86,7 @@ resources:
 - Make sure `postgres` container is running by doing `docker compose up -d`. This will start all the containers basically.
 
 ### Raw data extraction process pipeline
-- Before runnin the pipeline, it's important to have your data ready.For extracting and preparing the raw data, the `scripts/prepare_data.py` need to be executed. The script format is:
-```shell
-python scripts/prepare_data.py --cohort <cohort type (apl or nf)> --days <days (7 or 14)> --cohort_target <cohort_name>
-
-# Example:
-python scripts/prepare_data.py --cohort apl --days 14 --cohort_target "mimic_iv_target_apl_tr_14_days.csv.gz"
-```
-- The `cohort_name` is the name of the file in the `MIMIC-IV-data/` folder. In our case:
-    - `mimic_iv_target_apl_tr_14_days.csv.gz`
-    - `mimic_iv_target_nf_14_days.csv.gz`
-
-- This will create a `apl_lab_events_data_with_demographics.parquet` in `raw/apl_lab_events_data_with_demographics.parquet` which will be used during preprocessing.
+- Before running the pipeline, it's important to have your data ready. For **extracting and preparing the raw data**, the `scripts/prepare_data.py` need to be executed. Refer to [scripts/README.md](project/scripts/README.md) for more instructions.
 
 ---
 
@@ -114,7 +103,6 @@ Before starting model training, you **must review and adjust the configuration f
 ⚠️ Incorrect configuration will result in invalid or inconsistent experiments.
 
 ---
-
 
 ## Running the pipeline locally
 - Every time a *new package* is added or a change is made to the project, it is necessary to re-build the image. This will create a `model-training` container including all the packages. 
@@ -138,12 +126,36 @@ python run_exp.py
 ### Running the pipeline in `HPC` server
 
 1. Using `apptainer/docker`
-- Create wheels (`.whl`) files to avoid package dependency conflicts
+- Exclude unnecessary files before building to avoid bloating the Docker image. Make sure you have `.dockerignore` (![more info here](https://docs.docker.com/build/concepts/context/#dockerignore-files)) file at the project root. At minimum, exclude these:
+```bash
+# Large dataset
+mimiciv/
+dataset/
+postgres_data/
+postgres/
+
+# Logs and temp files
+*.log
+tmp/
+
+# Experiment outputs
+outputs/
+
+```
+
+- Create wheels (`.whl`) files to avoid package dependency conflicts. These wheels (`.whl`) are built using customf ![docker/Dockerfile](docker/Dockerfile), which:
+    - Ensures consistent builds by installing dependencies only from pre-downloaded `.whl` files which is super useful especially in HPC environment.
+    - **Avoids PyPI network calls on HPC clusters.**
+- Check out ![docker/README.md](docker/README.md) for detailed instructions. 
+
 ```bash
 pip download -r requirements.txt -d wheels/
 ```
 
-- Build the container (`.tar`) file
+- Build the container (`.tar`) file. This step uses the `docker/Dockerfile` to:
+    - Install the system libraries required by the ML packages.
+    - Copy the `wheels/` directory and install dependencies locally.
+    - Package everything into a minimal, secure image for portability.
 ```bash
 docker compose build --no-cache 
 ```
