@@ -21,7 +21,6 @@ project/
 │   │   │   └── logs/               # Stores logs for different ML models
 │   │   │   └── models/             # logs models training parameters  
 │   │   │   └── results/            # stores models results
-├── plots/                          # Stores performance plots and visualizations
 ├── scripts/                        # Scripts to prepare raw data by querying PostgreSQL
 │   └── fetch_demographics_data.py      # fetches the demographics data from DB and merge the target file
 │   └── fetch_labevents_data.py         # fetches the labevents data from DB
