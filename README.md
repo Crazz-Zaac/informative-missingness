@@ -216,31 +216,40 @@ scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 
 --- 
 ## Results
-- [x] Aplasia Cohort
-- Clinical Target
-![Clinical Targe](results/APL_Clinical_Target_CB_metrics.png)
+<details>
+  <summary>✔️ Aplasia Cohort</summary>
 
-- Gender
-![Gender](results/APL_Gender_CB_metrics.png)
+- **Clinical Target**  
+  ![Clinical Target](results/APL_Clinical_Target_CB_metrics.png)
 
-- Race
-![Race](results/APL_Race_CB_metrics.png)
+- **Gender**  
+  ![Gender](results/APL_Gender_CB_metrics.png)
 
-- Age
-![Age](results/APL_Age_CB_metrics.png)
+- **Race**  
+  ![Race](results/APL_Race_CB_metrics.png)
 
-- [x] Neutropenic Fever Cohort
-- Clinical Target
-![NF Clinical Target](results/NF_Clinical_Target_CB_metrics.png)
+- **Age**  
+  ![Age](results/APL_Age_CB_metrics.png)
 
-- Gender
-![Gender NF](results/NF_Gender_CB_metrics.png)
+</details>
 
-- Race
-![Race NF](results/NF_Race_CB_metrics.png)
+<details>
+  <summary>✔️ Neutropenic Fever Cohort</summary>
 
-- Age
-![Age_NF](results/NF_Age_CB_metrics.png)
+- **Clinical Target**  
+  ![NF Clinical Target](results/NF_Clinical_Target_CB_metrics.png)
+
+- **Gender**  
+  ![Gender NF](results/NF_Gender_CB_metrics.png)
+
+- **Race**  
+  ![Race NF](results/NF_Race_CB_metrics.png)
+
+- **Age**  
+  ![Age NF](results/NF_Age_CB_metrics.png)
+
+</details>
+
 
 ---
 ## MIMIC-IV database citations
