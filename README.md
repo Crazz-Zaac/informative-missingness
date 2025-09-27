@@ -241,3 +241,44 @@ scp -r raw/apl_*.parquet USERNAME@CLUSTER:/home/USERNAME/
 
 - Age
 ![Age_NF](results/NF_Age_CB_metrics.png)
+
+---
+## MIMIC-IV database citations
+- More information about the database can be found in the [Physionnet website](https://physionet.org/content/mimiciv/3.1/)
+
+```bash
+@dataset{johnson2024mimiciv,
+  title        = {MIMIC-IV (version 3.1)},
+  author       = {Johnson, A. and Bulgarelli, L. and Pollard, T. and Gow, B. and Moody, B. and Horng, S. and Celi, L. A. and Mark, R.},
+  year         = {2024},
+  publisher    = {PhysioNet},
+  note         = {RRID:SCR_007345},
+  doi          = {10.13026/kpb9-mt58},
+  url          = {https://doi.org/10.13026/kpb9-mt58}
+}
+
+@article{johnson2023mimiciv,
+  title        = {MIMIC-IV, a freely accessible electronic health record dataset},
+  author       = {Johnson, A. E. W. and Bulgarelli, L. and Shen, L. and others},
+  journal      = {Scientific Data},
+  volume       = {10},
+  number       = {1},
+  pages        = {1},
+  year         = {2023},
+  doi          = {10.1038/s41597-022-01899-x},
+  url          = {https://doi.org/10.1038/s41597-022-01899-x}
+}
+
+@article{goldberger2000physionet,
+  title        = {PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals},
+  author       = {Goldberger, A. L. and Amaral, L. A. and Glass, L. and Hausdorff, J. M. and Ivanov, P. C. and Mark, R. G. and others},
+  journal      = {Circulation},
+  volume       = {101},
+  number       = {23},
+  pages        = {e215--e220},
+  year         = {2000},
+  doi          = {10.1161/01.CIR.101.23.e215},
+  url          = {https://doi.org/10.1161/01.CIR.101.23.e215},
+  note         = {RRID:SCR_007345}
+}
+```
